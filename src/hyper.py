@@ -23,25 +23,53 @@ class HyperParameter:
     
         """ Set some paths by reading folders """
         
+        year_list = list(range(2010, 2023))
+        quarter_list = ['-1-', '-2-', '-3-', '-4']
         self.UBERMOVEMENT_LIST_OF_CITIES = listdir(self.PATH_TO_DATA_RAW_UBERMOVEMENT)
         self.UBERMOVEMENT_CITY_FILES_MAPPING = {}
         for city in self.UBERMOVEMENT_LIST_OF_CITIES:
             path_to_city = self.PATH_TO_DATA_RAW_UBERMOVEMENT + city + '/'
             file_list = listdir(path_to_city)
+            csv_file_dict_list = []
             for filename in file_list:
                 if filename.endswith('.json'):
                     json = filename
-                elif 'OnlyWeekdays' in filename:
-                    weekdays = filename
-                elif 'OnlyWeekends' in filename:
-                    weekends = filename
+                    break
                     
+                else:
+                    # declare new empty directory to be filled with desired values
+                    csv_file_dict = {}
                     
-            filedictionary = {
+                    # determine daytype
+                    if 'OnlyWeekdays' in filename:
+                        daytype = 'weekdays'
+                    elif 'OnlyWeekends' in filename:
+                        daytype = 'weekends'
+                    
+                    # determine year
+                    for year in year_list:
+                        if str(year) in filename:
+                            break
+                            
+                    # determine quarter of year
+                    for quarter in quarter_list:
+                        if quarter in filename:
+                            quarter = int(quarter[1])
+                            break
+                    
+                    # fill dictionary with desired values
+                    csv_file_dict['daytype'] = daytype
+                    csv_file_dict['year'] = year
+                    csv_file_dict['quarter'] = quarter
+                    csv_file_dict['filename'] = filename
+                    
+                    # append csv file dictionary to list
+                    csv_file_dict_list.append(csv_file_dict)
+                    
+            file_dict = {
                 'json' : json,
-                'weekdays': weekdays,
-                'weekends': weekends
+                'csv_file_dict_list': csv_file_dict_list
             }
-            self.UBERMOVEMENT_CITY_FILES_MAPPING[city] = filedictionary
+            self.UBERMOVEMENT_CITY_FILES_MAPPING[city] = file_dict
            
     
