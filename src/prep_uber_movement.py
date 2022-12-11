@@ -27,21 +27,20 @@ def import_data(HYPER, city):
     
     
     
-def import_geojson(path_to_json_data):
+def process_geojson(df_geojson):
 
-    """ Imports the geojson data from the passed path and maps Uber Movement
-    city zone IDs to a flattened list of latitude and longitude coordinates
-    in the format of two dictionaries. Uses the recursive function called
-    foster_coordinates_recursive to flatten the differently nested data.
+    """ Maps Uber Movement city zone IDs to a flattened list of latitude and 
+    longitude coordinates in the format of two dictionaries. Uses the recursive 
+    function called foster_coordinates_recursive to flatten the differently nested 
+    data.
     """
     
-    data = pd.read_json(path_to_json_data)
-    data.pop('type')
-    data = data['features']
+    df_geojson.pop('type')
+    df_geojson = df_geojson['features']
     
     map_json_entry_to_movement_id = dict()
 
-    for json_id, json_entry in enumerate(data):
+    for json_id, json_entry in enumerate(df_geojson):
         
         map_json_entry_to_movement_id[json_id] = int(
           json_entry['properties']['MOVEMENT_ID']
@@ -56,7 +55,7 @@ def import_geojson(path_to_json_data):
 
 
     for json_id, movement_id in map_json_entry_to_movement_id.items():
-        coordinates = data[json_id]['geometry']['coordinates']
+        coordinates = df_geojson[json_id]['geometry']['coordinates']
         
         (
             map_movement_id_to_latitude_coordinates, 

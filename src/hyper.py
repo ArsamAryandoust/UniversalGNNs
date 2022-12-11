@@ -8,13 +8,23 @@ class HyperParameter:
     
     ### Data paths ###
     
+    # general
     PATH_TO_DATA = '../data/public/'
     PATH_TO_DATA_RAW = PATH_TO_DATA + 'raw/'
+    PATH_TO_DATA_PROCESSED = 'processed/'
+    
+    # Uber Movement
     PATH_TO_DATA_RAW_UBERMOVEMENT = PATH_TO_DATA_RAW + 'UberMovement/'
+    PATH_TO_DATA_PROCESSED_UBERMOVEMENT = PATH_TO_DATA_PROCESSED + 'UberMovement/'
+    PATH_TO_DATA_PROCESSED_UBERMOVEMENT_POLYGONES = PATH_TO_DATA_PROCESSED_UBERMOVEMENT + 'city zone polygons/'
+    
+    # ClimART
     PATH_TO_DATA_RAW_CLIMART = PATH_TO_DATA_RAW + 'ClimART/'
     PATH_TO_DATA_RAW_CLIMART_INPUTS = PATH_TO_DATA_RAW_CLIMART + 'inputs/'
     PATH_TO_DATA_RAW_CLIMART_OUTPUTS_CLEAR_SKY = PATH_TO_DATA_RAW_CLIMART + 'outputs_clear_sky/'
     PATH_TO_DATA_RAW_CLIMART_OUTPUTS_PRISTINE = PATH_TO_DATA_RAW_CLIMART + 'outputs_pristine/'
+    
+    # Open Catalyst
     
     
     ### Methods ###
@@ -23,6 +33,7 @@ class HyperParameter:
     
         """ Set some paths by reading folders """
         
+        ### Uber Movement ###
         year_list = list(range(2010, 2023))
         quarter_list = ['-1-', '-2-', '-3-', '-4']
         self.UBERMOVEMENT_LIST_OF_CITIES = listdir(self.PATH_TO_DATA_RAW_UBERMOVEMENT)
@@ -72,4 +83,5 @@ class HyperParameter:
             }
             self.UBERMOVEMENT_CITY_FILES_MAPPING[city] = file_dict
            
+       
     
