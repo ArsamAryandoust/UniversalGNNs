@@ -64,7 +64,7 @@ Download this repository to your home directory:
 
 ```
 cd 
-git clone https://github.com/ArsamAryandoust/UniversalGNNs
+git clone https://github.com/ArsamAryandoust/UniversalDeepLearning
 cd UniversalGNNs
 ```
 
@@ -88,13 +88,13 @@ docker build -t main_notebook DockerNotebook
 Compute using CPU only:
 
 ```
-docker run -it -v ~/UniversalGNNs:/UniversalGNNs -p 3333:1111 main_notebook
+docker run -it -v ~/UniversalDeepLearning:/UniversalDeepLearning -p 3333:1111 main_notebook
 ```
 
 Compute using GPUs too:
 
 ```
-docker run -it --gpus all -v ~/UniversalGNNs:/UniversalGNNs -p 3333:1111 main_notebook
+docker run -it --gpus all -v ~/UniversalDeepLearning:/UniversalDeepLearning -p 3333:1111 main_notebook
 ```
 
 
