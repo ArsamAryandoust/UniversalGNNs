@@ -1,12 +1,9 @@
 import pandas as pd
 
 
-def import_data(HYPER, city):
+def import_csvdata(HYPER, city):
 
     """ Imports the Uber Movement data for a passed city """
-    
-
-    df_geojson = import_geojson(HYPER, city)
     
     # import csv data
     files_dict = HYPER.UBERMOVEMENT_CITY_FILES_MAPPING[city]
@@ -19,8 +16,24 @@ def import_data(HYPER, city):
         df_csv_dict_list.append(csv_df_dict)
         
     
-    return df_csv_dict_list, df_geojson
+    return df_csv_dict_list
     
+    
+def process_csvdata(df_csv_dict):
+    
+    """
+    """
+    
+    df_augmented_csvdata = df_csv_dict['df']
+    daytype = df_csv_dict['daytype']
+    quarter = df_csv_dict['quarter']
+    year = df_csv_dict['year']
+    
+    df_augmented_csvdata['year'] = year
+    df_augmented_csvdata['quarter'] = quarter
+    df_augmented_csvdata['daytype'] = daytype
+    
+    return df_augmented_csvdata
     
 def process_geojson(df_geojson):
 
@@ -145,8 +158,8 @@ def process_all_raw_geojson_data(HYPER):
         df_geojson = import_geojson(HYPER, city)
         df_latitudes, df_longitudes = process_geojson(df_geojson)
         
-        filename_lat = city + '_lat.csv'
-        filename_lon = city + '_lon.csv' 
+        filename_lat = city + ' lat.csv'
+        filename_lon = city + ' lon.csv' 
         saving_path_lat = (
             HYPER.PATH_TO_DATA_PROCESSED_UBERMOVEMENT_POLYGONES 
             + filename_lat
