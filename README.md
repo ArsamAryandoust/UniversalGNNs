@@ -1,4 +1,4 @@
-# Enhancing AutoML for tackling climate change with universal GNNs
+# Enhancing AutoML for tackling climate change with universal deep learning models
 
 We propose a universal graph representation of data that is able to capture arbitrary 
 real world events as attributes of nodes, edges and graphs. When data can be structured 
