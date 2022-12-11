@@ -11,7 +11,7 @@ class HyperParameter:
     # general
     PATH_TO_DATA = '../data/public/'
     PATH_TO_DATA_RAW = PATH_TO_DATA + 'raw/'
-    PATH_TO_DATA_PROCESSED = 'processed/'
+    PATH_TO_DATA_PROCESSED = PATH_TO_DATA + 'processed/'
     
     # Uber Movement
     PATH_TO_DATA_RAW_UBERMOVEMENT = PATH_TO_DATA_RAW + 'UberMovement/'
@@ -82,6 +82,6 @@ class HyperParameter:
                 'csv_file_dict_list': csv_file_dict_list
             }
             self.UBERMOVEMENT_CITY_FILES_MAPPING[city] = file_dict
-           
+            
        
     

@@ -5,15 +5,11 @@ def import_data(HYPER, city):
 
     """ Imports the Uber Movement data for a passed city """
     
-    
-    # get dict of 'json', 'weekdays' and 'weekends' data file names
-    files_dict = HYPER.UBERMOVEMENT_CITY_FILES_MAPPING[city]
 
-    # import geojson data
-    path_to_json = HYPER.PATH_TO_DATA_RAW_UBERMOVEMENT + city + '/' + files_dict['json']
-    df_geojson = pd.read_json(path_to_json)
+    df_geojson = import_geojson(HYPER, city)
     
     # import csv data
+    files_dict = HYPER.UBERMOVEMENT_CITY_FILES_MAPPING[city]
     df_csv_dict_list = []
     for csv_file_dict in files_dict['csv_file_dict_list']:
         path_to_csv = HYPER.PATH_TO_DATA_RAW_UBERMOVEMENT + city + '/' + csv_file_dict['filename']
@@ -24,7 +20,6 @@ def import_data(HYPER, city):
         
     
     return df_csv_dict_list, df_geojson
-    
     
     
 def process_geojson(df_geojson):
@@ -68,13 +63,17 @@ def process_geojson(df_geojson):
         )
         
     
-    map_movement_id_to_coordinates = (
-        map_movement_id_to_latitude_coordinates,
-        map_movement_id_to_longitude_coordinates
-    )
-
-    return map_movement_id_to_coordinates
-
+    df_latitudes = pd.DataFrame.from_dict(
+        map_movement_id_to_latitude_coordinates, 
+        orient='index'
+    ).transpose()
+    
+    df_longitudes = pd.DataFrame.from_dict(
+        map_movement_id_to_longitude_coordinates, 
+        orient='index'
+    ).transpose()
+    
+    return df_latitudes, df_longitudes
 
 
 def foster_coordinates_recursive(
@@ -125,3 +124,38 @@ def foster_coordinates_recursive(
     )
 
     return map_movement_id_to_coordinates
+    
+    
+def import_geojson(HYPER, city):
+
+    # get dict of 'json', 'weekdays' and 'weekends' data file names
+    files_dict = HYPER.UBERMOVEMENT_CITY_FILES_MAPPING[city]
+
+    # import geojson data
+    path_to_json = HYPER.PATH_TO_DATA_RAW_UBERMOVEMENT + city + '/' + files_dict['json']
+    df_geojson = pd.read_json(path_to_json)
+        
+    return df_geojson
+    
+def process_all_raw_geojson_data(HYPER):
+    
+    """ """
+    
+    for city in HYPER.UBERMOVEMENT_LIST_OF_CITIES:
+        df_geojson = import_geojson(HYPER, city)
+        df_latitudes, df_longitudes = process_geojson(df_geojson)
+        
+        filename_lat = city + '_lat.csv'
+        filename_lon = city + '_lon.csv' 
+        saving_path_lat = (
+            HYPER.PATH_TO_DATA_PROCESSED_UBERMOVEMENT_POLYGONES 
+            + filename_lat
+        )
+        saving_path_lon = (
+            HYPER.PATH_TO_DATA_PROCESSED_UBERMOVEMENT_POLYGONES 
+            + filename_lon
+        )
+        df_latitudes.to_csv(saving_path_lat)
+        df_longitudes.to_csv(saving_path_lon)
+        
+        
