@@ -65,7 +65,7 @@ Download this repository to your home directory:
 ```
 cd 
 git clone https://github.com/ArsamAryandoust/UniversalDeepLearning
-cd UniversalGNNs
+cd UniversalDeepLearning
 ```
 
 ## Docker
