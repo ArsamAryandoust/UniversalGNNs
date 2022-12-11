@@ -27,6 +27,9 @@ class HyperParameter:
     # Open Catalyst
     
     
+    ### Training, validation, testing splits ###
+    
+    
     ### Methods ###
     
     def __init__(self):
