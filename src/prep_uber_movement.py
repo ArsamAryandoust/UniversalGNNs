@@ -1,6 +1,6 @@
 import pandas as pd
 import random
-
+import gc
 
 def import_csvdata(HYPER, city):
 
@@ -72,7 +72,7 @@ def train_val_test_split(HYPER):
         df_csv_dict_list = import_csvdata(HYPER, city)
         
         # iterate over all imported csv files for this city
-        for df_csv_dict in df_csv_dict_list:
+        for iter_csv, df_csv_dict in enumerate(df_csv_dict_list):
         
             # check if testing year
             if df_csv_dict['year'] == HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['year']:
@@ -90,9 +90,57 @@ def train_val_test_split(HYPER):
             df_augmented_csvdata = process_csvdata(df_csv_dict, city)
             
             if testing_city or testing_year or testing_quarter:
+                
+                # append all data to test dataframe
                 df_test = pd.concat([df_test, df_augmented_csvdata])
+                
+                # free up memory
+                del df_augmented_csvdata
+                gc.collect()
+                
             else:
-                pass
+                
+                # get the subset of city zones for test splits once per city
+                if iter_csv == 0:
+                    n_city_zones = max(
+                        df_augmented_csvdata['sourceid'].max(),
+                        df_augmented_csvdata['dstid'].max()
+                    )
+                    
+                    # get number of test city zones you want to split
+                    n_test_city_zones = round(
+                        n_city_zones * HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['spatial_dict']['city_zone_share']
+                    )
+                    
+                    # randomly sample test city zones
+                    test_city_zone_list = random.sample(range(n_city_zones), n_test_city_zones)
+                    
+                # extract the rows from dataframe with matching city zones in origin and destination
+                df_test_city_zones = df_augmented_csvdata.loc[
+                    (df_augmented_csvdata['dstid'].isin(test_city_zone_list)) 
+                    | (df_augmented_csvdata['sourceid'].isin(test_city_zone_list))
+                ]
+                
+                # set the remaining rows for training and validation
+                df_train_val_city_zones = df_augmented_csvdata.drop(df_test_city_zones.index)
+                
+                # free up memory
+                del df_augmented_csvdata
+                gc.collect()
+                
+                # append to test dataframe
+                df_test = pd.concat([df_test, df_test_city_zones])
+                
+                # free up memory
+                del df_test_city_zones
+                gc.collect()
+                
+                
+                
+            # free up memory        
+            del df_csv_dict['df']
+            gc.collect()
+                    
     
     return df_train, df_val, df_test
     
