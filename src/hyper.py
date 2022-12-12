@@ -53,8 +53,8 @@ class HyperParameter:
         """ Set some paths by reading folders """
         
         ### Uber Movement ###
-        year_list = list(range(2010, 2023))
-        quarter_list = ['-1-', '-2-', '-3-', '-4']
+        year_list = list(range(2015, 2021))
+        quarter_list = ['-1-', '-2-', '-3-', '-4-']
         self.UBERMOVEMENT_LIST_OF_CITIES = listdir(self.PATH_TO_DATA_RAW_UBERMOVEMENT)
         self.UBERMOVEMENT_CITY_FILES_MAPPING = {}
         for city in self.UBERMOVEMENT_LIST_OF_CITIES:
