@@ -40,7 +40,7 @@ class HyperParameter:
             'hours_of_day': [2, 4, 10, 12, 16, 17]
         },
         'spatial_dict': {
-            'n_cities': 5,
+            'city_share': 0.1,
             'city_zone_share': 0.2
         }
     }
@@ -55,7 +55,7 @@ class HyperParameter:
         ### Uber Movement ###
         year_list = list(range(2015, 2021))
         quarter_list = ['-1-', '-2-', '-3-', '-4-']
-        self.UBERMOVEMENT_LIST_OF_CITIES = listdir(self.PATH_TO_DATA_RAW_UBERMOVEMENT)
+        self.UBERMOVEMENT_LIST_OF_CITIES = listdir(self.PATH_TO_DATA_RAW_UBERMOVEMENT)[:10]
         self.UBERMOVEMENT_CITY_FILES_MAPPING = {}
         for city in self.UBERMOVEMENT_LIST_OF_CITIES:
             path_to_city = self.PATH_TO_DATA_RAW_UBERMOVEMENT + city + '/'

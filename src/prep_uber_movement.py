@@ -44,7 +44,10 @@ def train_val_test_split(HYPER):
     """
     
     # split apart a number of cities for testing
-    n_cities_test = HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['spatial_dict']['n_cities']
+    n_cities_test = round(
+        HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['spatial_dict']['city_share']
+        * len(HYPER.UBERMOVEMENT_LIST_OF_CITIES)
+    )
     list_of_cities_test = random.sample(
         HYPER.UBERMOVEMENT_LIST_OF_CITIES, 
         n_cities_test
@@ -71,8 +74,10 @@ def train_val_test_split(HYPER):
         # import all csv files for currently iterated city
         df_csv_dict_list = import_csvdata(HYPER, city)
         
+        
         # iterate over all imported csv files for this city
         for iter_csv, df_csv_dict in enumerate(df_csv_dict_list):
+        
         
             # check if testing year
             if df_csv_dict['year'] == HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['year']:
@@ -89,31 +94,32 @@ def train_val_test_split(HYPER):
             # augment csv
             df_augmented_csvdata = process_csvdata(df_csv_dict, city)
             
+            # free up memory     
+            del df_csv_dict['df']
+            gc.collect()
+            
+            # get the subset of city zones for test splits once per city
+            if iter_csv == 0:
+                n_city_zones = max(
+                    df_augmented_csvdata['sourceid'].max(),
+                    df_augmented_csvdata['dstid'].max()
+                )
+                
+                # get number of test city zones you want to split
+                n_test_city_zones = round(
+                    n_city_zones * HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['spatial_dict']['city_zone_share']
+                )
+                
+                # randomly sample test city zones
+                test_city_zone_list = random.sample(range(n_city_zones), n_test_city_zones)
+            
             if testing_city or testing_year or testing_quarter:
                 
                 # append all data to test dataframe
                 df_test = pd.concat([df_test, df_augmented_csvdata])
                 
-                # free up memory
-                del df_augmented_csvdata
-                gc.collect()
-                
             else:
                 
-                # get the subset of city zones for test splits once per city
-                if iter_csv == 0:
-                    n_city_zones = max(
-                        df_augmented_csvdata['sourceid'].max(),
-                        df_augmented_csvdata['dstid'].max()
-                    )
-                    
-                    # get number of test city zones you want to split
-                    n_test_city_zones = round(
-                        n_city_zones * HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['spatial_dict']['city_zone_share']
-                    )
-                    
-                    # randomly sample test city zones
-                    test_city_zone_list = random.sample(range(n_city_zones), n_test_city_zones)
                     
                 # extract the rows from dataframe with matching city zones in origin and destination
                 df_test_city_zones = df_augmented_csvdata.loc[
@@ -122,11 +128,7 @@ def train_val_test_split(HYPER):
                 ]
                 
                 # set the remaining rows for training and validation
-                df_train_val_city_zones = df_augmented_csvdata.drop(df_test_city_zones.index)
-                
-                # free up memory
-                del df_augmented_csvdata
-                gc.collect()
+                df_augmented_csvdata = df_augmented_csvdata.drop(df_test_city_zones.index)
                 
                 # append to test dataframe
                 df_test = pd.concat([df_test, df_test_city_zones])
@@ -135,10 +137,30 @@ def train_val_test_split(HYPER):
                 del df_test_city_zones
                 gc.collect()
                 
+                # extract the rows from dataframe with matching hours of data for test
+                df_test_hours_of_day = df_augmented_csvdata.loc[
+                    df_augmented_csvdata['hod'].isin(HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['hours_of_day']) 
+                ]
                 
+                # set the remaining rows for training and validation
+                df_augmented_csvdata = df_augmented_csvdata.drop(df_test_hours_of_day.index)
                 
-            # free up memory        
-            del df_csv_dict['df']
+                # append to test dataframe
+                df_test = pd.concat([df_test, df_test_hours_of_day])
+                
+                # free up memory
+                del df_test_hours_of_day
+                gc.collect()
+                
+                # create training and validation datasets
+                df_train = df_augmented_csvdata.sample(
+                    frac=HYPER.TRAIN_VAL_SPLIT_UBERMOVEMENT
+                )
+                df_val = df_augmented_csvdata.drop(df_train.index)
+                
+            
+            # free up memory     
+            del df_augmented_csvdata   
             gc.collect()
                     
     
