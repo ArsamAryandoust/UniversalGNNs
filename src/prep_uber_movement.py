@@ -22,8 +22,7 @@ def import_csvdata(HYPER, city):
     
 def process_csvdata(df_csv_dict, city):
     
-    """
-    """
+    """ """
     
     df_augmented_csvdata = df_csv_dict['df']
     daytype = df_csv_dict['daytype']
@@ -40,8 +39,7 @@ def process_csvdata(df_csv_dict, city):
     
 def train_val_test_split(HYPER):
 
-    """
-    """
+    """ """
     
     # split apart a number of cities for testing
     n_cities_test = round(
@@ -193,7 +191,27 @@ def train_val_test_split(HYPER):
         "Testing data    :    {:.0%} \n".format(n_data_test/n_data_total)
     )
     
+    ### Save results
+    saving_path_train = (
+        HYPER.PATH_TO_DATA_PROCESSED_UBERMOVEMENT 
+        + 'training_data.csv'
+    )
+    saving_path_val = (
+        HYPER.PATH_TO_DATA_PROCESSED_UBERMOVEMENT 
+        + 'validation_data.csv'
+    )
+    saving_path_test = (
+        HYPER.PATH_TO_DATA_PROCESSED_UBERMOVEMENT 
+        + 'testing_data.csv'
+    )
+    
+    df_train.to_csv(saving_path_train, index=False)
+    df_val.to_csv(saving_path_val, index=False)
+    df_test.to_csv(saving_path_test, index=False)
+    
     return df_train, df_val, df_test
+
+
     
 def process_geojson(df_geojson):
 

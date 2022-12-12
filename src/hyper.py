@@ -9,7 +9,7 @@ class HyperParameter:
     ### Data paths ###
     
     # general
-    PATH_TO_DATA = '../data/public/'
+    PATH_TO_DATA = '../data/'
     PATH_TO_DATA_RAW = PATH_TO_DATA + 'raw/'
     PATH_TO_DATA_PROCESSED = PATH_TO_DATA + 'processed/'
     
