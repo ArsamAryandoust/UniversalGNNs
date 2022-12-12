@@ -35,7 +35,7 @@ class HyperParameter:
     # out of distribution test splitting rules in time and space
     TEST_SPLIT_DICT_UBERMOVEMENT = {
         'temporal_dict': {
-            'years': 2017,
+            'year': 2017,
             'quarter': 3,
             'hours_of_day': [2, 4, 10, 12, 16, 17]
         },

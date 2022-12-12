@@ -1,4 +1,5 @@
 import pandas as pd
+import random
 
 
 def import_csvdata(HYPER, city):
@@ -19,7 +20,7 @@ def import_csvdata(HYPER, city):
     return df_csv_dict_list
     
     
-def process_csvdata(df_csv_dict):
+def process_csvdata(df_csv_dict, city):
     
     """
     """
@@ -32,6 +33,7 @@ def process_csvdata(df_csv_dict):
     df_augmented_csvdata['year'] = year
     df_augmented_csvdata['quarter'] = quarter
     df_augmented_csvdata['daytype'] = daytype
+    df_augmented_csvdata['city'] = city 
     
     return df_augmented_csvdata
     
@@ -41,8 +43,58 @@ def train_val_test_split(HYPER):
     """
     """
     
-    pass
+    # split apart a number of cities for testing
+    n_cities_test = HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['spatial_dict']['n_cities']
+    list_of_cities_test = random.sample(
+        HYPER.UBERMOVEMENT_LIST_OF_CITIES, 
+        n_cities_test
+    )
+    list_of_cities_train_val = list(
+        set(HYPER.UBERMOVEMENT_LIST_OF_CITIES) 
+        - set(list_of_cities_test)
+    )
     
+    # decleare empty dataframes for trainining validation and testing
+    df_train = pd.DataFrame()
+    df_val = pd.DataFrame()
+    df_test = pd.DataFrame()
+    
+    # iterate over all available cities
+    for city in HYPER.UBERMOVEMENT_LIST_OF_CITIES:
+        
+        # check if city is in testing city list
+        if city in list_of_cities_test:
+            testing_city = True
+        else:
+            testing_city = False
+        
+        # import all csv files for currently iterated city
+        df_csv_dict_list = import_csvdata(HYPER, city)
+        
+        # iterate over all imported csv files for this city
+        for df_csv_dict in df_csv_dict_list:
+        
+            # check if testing year
+            if df_csv_dict['year'] == HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['year']:
+                testing_year = True
+            else:
+                testing_year = False
+                
+            # check if testing quarter
+            if df_csv_dict['quarter'] == HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['quarter']:
+                testing_quarter = True
+            else:
+                testing_quarter = False
+            
+            # augment csv
+            df_augmented_csvdata = process_csvdata(df_csv_dict, city)
+            
+            if testing_city or testing_year or testing_quarter:
+                df_test = pd.concat([df_test, df_augmented_csvdata])
+            else:
+                pass
+    
+    return df_train, df_val, df_test
     
 def process_geojson(df_geojson):
 
