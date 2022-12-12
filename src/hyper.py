@@ -29,6 +29,22 @@ class HyperParameter:
     
     ### Training, validation, testing splits ###
     
+    # share to split training and validation data
+    TRAIN_VAL_SPLIT_UBERMOVEMENT = 0.5
+    
+    # out of distribution test splitting rules in time and space
+    TEST_SPLIT_DICT_UBERMOVEMENT = {
+        'temporal_dict': {
+            'years': 2017,
+            'quarter': 3,
+            'hours_of_day': [2, 4, 10, 12, 16, 17]
+        },
+        'spatial_dict': {
+            'n_cities': 5,
+            'city_zone_share': 0.2
+        }
+    }
+    
     
     ### Methods ###
     

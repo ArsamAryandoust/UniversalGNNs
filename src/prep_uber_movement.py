@@ -35,6 +35,15 @@ def process_csvdata(df_csv_dict):
     
     return df_augmented_csvdata
     
+    
+def train_val_test_split(HYPER):
+
+    """
+    """
+    
+    pass
+    
+    
 def process_geojson(df_geojson):
 
     """ Maps Uber Movement city zone IDs to a flattened list of latitude and 
@@ -141,6 +150,8 @@ def foster_coordinates_recursive(
     
 def import_geojson(HYPER, city):
 
+    """ """
+    
     # get dict of 'json', 'weekdays' and 'weekends' data file names
     files_dict = HYPER.UBERMOVEMENT_CITY_FILES_MAPPING[city]
 
@@ -149,6 +160,7 @@ def import_geojson(HYPER, city):
     df_geojson = pd.read_json(path_to_json)
         
     return df_geojson
+    
     
 def process_all_raw_geojson_data(HYPER):
     
