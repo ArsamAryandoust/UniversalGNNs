@@ -37,11 +37,11 @@ class HyperParameter:
         'temporal_dict': {
             'year': 2017,
             'quarter': 3,
-            'hours_of_day': [2, 4, 10, 12, 16, 17]
+            'hours_of_day': [2, 4, 10, 12]
         },
         'spatial_dict': {
             'city_share': 0.1,
-            'city_zone_share': 0.2
+            'city_zone_share': 0.1
         }
     }
     

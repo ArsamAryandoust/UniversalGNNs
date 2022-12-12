@@ -153,16 +153,45 @@ def train_val_test_split(HYPER):
                 gc.collect()
                 
                 # create training and validation datasets
-                df_train = df_augmented_csvdata.sample(
+                df_train_append = df_augmented_csvdata.sample(
                     frac=HYPER.TRAIN_VAL_SPLIT_UBERMOVEMENT
                 )
-                df_val = df_augmented_csvdata.drop(df_train.index)
+                df_val_append = df_augmented_csvdata.drop(df_train_append.index)
                 
+                # append training dataset
+                df_train = pd.concat([df_train, df_train_append])
+                
+                # free up memory     
+                del df_train_append   
+                gc.collect()
+            
+                # append validation dataset
+                df_val = pd.concat([df_val, df_val_append])
+                
+                # free up memory     
+                del df_val_append   
+                gc.collect()
             
             # free up memory     
             del df_augmented_csvdata   
             gc.collect()
                     
+    ### Shuffle dataframes and reset indices
+    df_train = df_train.sample(frac=1).reset_index(drop=True)
+    df_val = df_val.sample(frac=1).reset_index(drop=True)
+    df_test = df_test.sample(frac=1).reset_index(drop=True)
+    
+    n_data_train = len(df_train.index)
+    n_data_val = len(df_val.index)
+    n_data_test = len(df_test.index)
+    n_data_total = n_data_train + n_data_val + n_data_test
+    
+    ### Tell us the rations that result from our splitting rules
+    print(
+        "Training data   :    {:.0%} \n".format(n_data_train/n_data_total),
+        "Validation data :    {:.0%} \n".format(n_data_val/n_data_total),
+        "Testing data    :    {:.0%} \n".format(n_data_test/n_data_total)
+    )
     
     return df_train, df_val, df_test
     
