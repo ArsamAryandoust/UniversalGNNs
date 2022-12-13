@@ -1,4 +1,4 @@
-from os import listdir
+import os
 
 class HyperParameter:
 
@@ -11,12 +11,14 @@ class HyperParameter:
     # general
     PATH_TO_DATA = '../data/'
     PATH_TO_DATA_RAW = PATH_TO_DATA + 'raw/'
-    PATH_TO_DATA_PROCESSED = PATH_TO_DATA + 'processed/'
     
     # Uber Movement
     PATH_TO_DATA_RAW_UBERMOVEMENT = PATH_TO_DATA_RAW + 'UberMovement/'
-    PATH_TO_DATA_PROCESSED_UBERMOVEMENT = PATH_TO_DATA_PROCESSED + 'UberMovement/'
-    PATH_TO_DATA_PROCESSED_UBERMOVEMENT_POLYGONES = PATH_TO_DATA_PROCESSED_UBERMOVEMENT + 'city zone polygons/'
+    PATH_TO_DATA_UBERMOVEMENT = PATH_TO_DATA + 'UberMovement/'
+    PATH_TO_DATA_UBERMOVEMENT_POLYGONES = PATH_TO_DATA_UBERMOVEMENT + 'city zone polygons/'
+    PATH_TO_DATA_UBERMOVEMENT_TRAIN = PATH_TO_DATA_UBERMOVEMENT + 'training/'
+    PATH_TO_DATA_UBERMOVEMENT_VAL = PATH_TO_DATA_UBERMOVEMENT + 'validation/'
+    PATH_TO_DATA_UBERMOVEMENT_TEST = PATH_TO_DATA_UBERMOVEMENT + 'testing/'
     
     # ClimART
     PATH_TO_DATA_RAW_CLIMART = PATH_TO_DATA_RAW + 'ClimART/'
@@ -24,7 +26,11 @@ class HyperParameter:
     PATH_TO_DATA_RAW_CLIMART_OUTPUTS_CLEAR_SKY = PATH_TO_DATA_RAW_CLIMART + 'outputs_clear_sky/'
     PATH_TO_DATA_RAW_CLIMART_OUTPUTS_PRISTINE = PATH_TO_DATA_RAW_CLIMART + 'outputs_pristine/'
     
+    
     # Open Catalyst
+    PATH_TO_DATA_RAW_OPENCATALYST = PATH_TO_DATA_RAW + 'OpenCatalyst/'
+    PATH_TO_DATA_RAW_OPENCATALYST_TRAJECTORIES = PATH_TO_DATA_RAW_OPENCATALYST + 'oc22_trajectories/trajectories/oc22/'
+    
     
     
     ### Training, validation, testing splits ###
@@ -55,11 +61,11 @@ class HyperParameter:
         ### Uber Movement ###
         year_list = list(range(2015, 2021))
         quarter_list = ['-1-', '-2-', '-3-', '-4-']
-        self.UBERMOVEMENT_LIST_OF_CITIES = listdir(self.PATH_TO_DATA_RAW_UBERMOVEMENT)[:10]
+        self.UBERMOVEMENT_LIST_OF_CITIES = os.listdir(self.PATH_TO_DATA_RAW_UBERMOVEMENT)[:5]
         self.UBERMOVEMENT_CITY_FILES_MAPPING = {}
         for city in self.UBERMOVEMENT_LIST_OF_CITIES:
             path_to_city = self.PATH_TO_DATA_RAW_UBERMOVEMENT + city + '/'
-            file_list = listdir(path_to_city)
+            file_list = os.listdir(path_to_city)
             csv_file_dict_list = []
             for filename in file_list:
                 if filename.endswith('.json'):
@@ -103,4 +109,16 @@ class HyperParameter:
             self.UBERMOVEMENT_CITY_FILES_MAPPING[city] = file_dict
             
        
+        ### Create directories ###
+        self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_TEST)
+        self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_VAL)
+        self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_TRAIN)
+        self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT)
+        self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_POLYGONES)
+           
+    def check_create_dir(self, path):
     
+        """ """
+        
+        if not os.path.isdir(path):
+            os.mkdir(path)
