@@ -193,15 +193,15 @@ def train_val_test_split(HYPER):
     
     ### Save results
     saving_path_train = (
-        HYPER.PATH_TO_DATA_PROCESSED_UBERMOVEMENT 
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_TRAIN 
         + 'training_data.csv'
     )
     saving_path_val = (
-        HYPER.PATH_TO_DATA_PROCESSED_UBERMOVEMENT 
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_VAL 
         + 'validation_data.csv'
     )
     saving_path_test = (
-        HYPER.PATH_TO_DATA_PROCESSED_UBERMOVEMENT 
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_TEST 
         + 'testing_data.csv'
     )
     
@@ -342,11 +342,11 @@ def process_all_raw_geojson_data(HYPER):
         filename_lat = city + ' lat.csv'
         filename_lon = city + ' lon.csv' 
         saving_path_lat = (
-            HYPER.PATH_TO_DATA_PROCESSED_UBERMOVEMENT_POLYGONES 
+            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONES 
             + filename_lat
         )
         saving_path_lon = (
-            HYPER.PATH_TO_DATA_PROCESSED_UBERMOVEMENT_POLYGONES 
+            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONES 
             + filename_lon
         )
         df_latitudes.to_csv(saving_path_lat)
