@@ -60,6 +60,9 @@ def train_val_test_split(HYPER):
     df_val = pd.DataFrame()
     df_test = pd.DataFrame()
     
+    # declare data point counters
+    train_chunk_counter, val_chunk_counter, test_chunk_counter = 0, 0, 0
+    
     # iterate over all available cities
     for city in HYPER.UBERMOVEMENT_LIST_OF_CITIES:
         
@@ -173,45 +176,111 @@ def train_val_test_split(HYPER):
             # free up memory     
             del df_augmented_csvdata   
             gc.collect()
-                    
-    ### Shuffle dataframes and reset indices
-    df_train = df_train.sample(frac=1).reset_index(drop=True)
-    df_val = df_val.sample(frac=1).reset_index(drop=True)
-    df_test = df_test.sample(frac=1).reset_index(drop=True)
-    
-    n_data_train = len(df_train.index)
-    n_data_val = len(df_val.index)
-    n_data_test = len(df_test.index)
-    n_data_total = n_data_train + n_data_val + n_data_test
-    
+            
+            
+            ### Save resulting data in chunks
+            df_train, train_chunk_counter = save_chunk(
+                HYPER,
+                df_train,
+                train_chunk_counter,
+                HYPER.PATH_TO_DATA_UBERMOVEMENT_TRAIN,
+                'training_data'    
+            )
+            df_val, val_chunk_counter = save_chunk(
+                HYPER,
+                df_val,
+                val_chunk_counter,
+                HYPER.PATH_TO_DATA_UBERMOVEMENT_VAL,
+                'validation_data'
+            )
+            df_test, test_chunk_counter = save_chunk(
+                HYPER,
+                df_test,
+                test_chunk_counter,
+                HYPER.PATH_TO_DATA_UBERMOVEMENT_TEST,
+                'testing_data'
+            )
+
     ### Tell us the rations that result from our splitting rules
+    n_train = (train_chunk_counter * HYPER.CHUNK_SIZE_UBERMOVEMENT) + len(df_train.index)
+    n_val = (val_chunk_counter * HYPER.CHUNK_SIZE_UBERMOVEMENT) + len(df_val.index)
+    n_test = (test_chunk_counter * HYPER.CHUNK_SIZE_UBERMOVEMENT) + len(df_test.index)
+    n_total = n_train + n_val + n_test
+    
     print(
-        "Training data   :    {:.0%} \n".format(n_data_train/n_data_total),
-        "Validation data :    {:.0%} \n".format(n_data_val/n_data_total),
-        "Testing data    :    {:.0%} \n".format(n_data_test/n_data_total)
+        "Training data   :    {:.0%} \n".format(n_train/n_total),
+        "Validation data :    {:.0%} \n".format(n_val/n_total),
+        "Testing data    :    {:.0%} \n".format(n_test/n_total)
     )
     
-    ### Save results
-    saving_path_train = (
-        HYPER.PATH_TO_DATA_UBERMOVEMENT_TRAIN 
-        + 'training_data.csv'
+    ### Save results of last iteration
+    df_train, train_chunk_counter = save_chunk(
+        HYPER,
+        df_train,
+        train_chunk_counter,
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_TRAIN,
+        'training_data',
+        last_iteration=True  
     )
-    saving_path_val = (
-        HYPER.PATH_TO_DATA_UBERMOVEMENT_VAL 
-        + 'validation_data.csv'
+    df_val, val_chunk_counter = save_chunk(
+        HYPER,
+        df_val,
+        val_chunk_counter,
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_VAL,
+        'validation_data',
+        last_iteration=True  
     )
-    saving_path_test = (
-        HYPER.PATH_TO_DATA_UBERMOVEMENT_TEST 
-        + 'testing_data.csv'
+    df_test, test_chunk_counter = save_chunk(
+        HYPER,
+        df_test,
+        test_chunk_counter,
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_TEST,
+        'testing_data',
+        last_iteration=True  
     )
-    
-    df_train.to_csv(saving_path_train, index=False)
-    df_val.to_csv(saving_path_val, index=False)
-    df_test.to_csv(saving_path_test, index=False)
     
     return df_train, df_val, df_test
 
 
+def save_chunk(
+    HYPER,
+    df,
+    chunk_counter,
+    saving_path,
+    filename,
+    last_iteration=False 
+):
+
+    """ """
+    
+    ### Save resulting data in chunks
+    while len(df.index) > HYPER.CHUNK_SIZE_UBERMOVEMENT or last_iteration:
+        
+        # increment chunk counter 
+        chunk_counter += 1
+        
+        # create path
+        saving_path = (
+            saving_path
+            + filename
+            + '_{}.csv'.format(chunk_counter)
+        )
+        
+        # shuffle
+        df = df.sample(frac=1)
+        
+        # save chunk
+        df.iloc[:HYPER.CHUNK_SIZE_UBERMOVEMENT].to_csv(saving_path, index=False)
+        
+        # delete saved chunk 
+        df = df[:HYPER.CHUNK_SIZE_UBERMOVEMENT]
+        
+        # set false for safety. Should not make a difference though.
+        last_iteration = False
+        
+    return df, chunk_counter
+    
+    
     
 def process_geojson(df_geojson):
 

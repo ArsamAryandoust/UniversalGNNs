@@ -35,6 +35,9 @@ class HyperParameter:
     
     ### Training, validation, testing splits ###
     
+    # Chunk size of data points per .csv file
+    CHUNK_SIZE_UBERMOVEMENT = 10_000_000
+    
     # share to split training and validation data
     TRAIN_VAL_SPLIT_UBERMOVEMENT = 0.5
     
