@@ -1,6 +1,7 @@
 import pandas as pd
 import random
 import gc
+import os
 
 
 def import_csvdata(HYPER, city):
@@ -167,7 +168,8 @@ def train_val_test_split(HYPER):
                 
                 # create training and validation datasets
                 df_train_append = df_augmented_csvdata.sample(
-                    frac=HYPER.TRAIN_VAL_SPLIT_UBERMOVEMENT
+                    frac=HYPER.TRAIN_VAL_SPLIT_UBERMOVEMENT,
+                    random_state=HYPER.SEED
                 )
                 df_val_append = df_augmented_csvdata.drop(df_train_append.index)
                 
@@ -285,8 +287,9 @@ def save_chunk(
         # save chunk
         df.iloc[:HYPER.CHUNK_SIZE_UBERMOVEMENT].to_csv(saving_path, index=False)
         
-        # delete saved chunk 
-        df = df[:HYPER.CHUNK_SIZE_UBERMOVEMENT]
+        # delete saved chunk
+        if not last_iteration:
+            df = df[HYPER.CHUNK_SIZE_UBERMOVEMENT:]
         
         # set false for safety. Should not make a difference though.
         last_iteration = False
@@ -461,4 +464,78 @@ def process_all_raw_geojson_data(HYPER):
         df_latitudes.to_csv(saving_path_lat)
         df_longitudes.to_csv(saving_path_lon)
         
+
+def shuffle_data_files(
+    HYPER,
+    n_iter_shuffle=3,
+    n_files_simultan=10
+):
+
+    """ """
+    path_to_folder_list = [
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_TRAIN,
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_VAL,
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_TEST
+    ]
+    
+    
+    # do this for train, val and test datasets separately
+    for path_to_folder in path_to_folder_list:
         
+        # get a list of files in currently iterated dataset (train,val, or test)
+        file_list = os.listdir(path_to_folder)
+        
+        # determine number of samples in dependence on file list length
+        if n_files_simultan > len(file_list):
+            n_samples = len(file_list)
+        else:
+            n_samples = n_files_simultan
+            
+        # do this for n_iter_shuffle times
+        for _ in range(n_iter_shuffle):
+        
+            # randomly sample n_samples from file list
+            random.seed(HYPER.SEED)
+            sampled_files = random.sample(file_list, n_samples)
+            
+            # declare empty dataframe
+            df = pd.DataFrame()
+            
+            # declare empty list to save number of data points of each file
+            n_data_points_list = []
+            
+            # iterate over all sampled files
+            for filename in sampled_files:
+                
+                # create path to iterated file
+                path_to_csv = path_to_folder + filename
+                
+                # import iterated file
+                df_csv = pd.read_csv(path_to_csv)
+                
+                # track the number of data points available in file
+                n_data_points_list.append(len(df_csv.index))
+                
+                # append imported file to dataframe
+                df = pd.concat([df, df_csv])
+            
+            # empty storage
+            del df_csv
+            gc.collect()
+            
+            # shuffle
+            df = df.sample(frac=1)
+            
+            # iterate over sampled files and n_data_points simultaneously
+            for filename, n_data_points in zip(sampled_files, n_data_points_list):
+                
+                # create path to iterated file
+                path_to_csv = path_to_folder + filename
+                
+                # save shuffled slice
+                df[:n_data_points].to_csv(path_to_csv, index=False)
+                
+                # remove saved slice
+                df = df[n_data_points:]
+            
+            
