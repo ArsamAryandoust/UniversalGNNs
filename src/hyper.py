@@ -21,7 +21,7 @@ class HyperParameter:
     # Uber Movement
     PATH_TO_DATA_RAW_UBERMOVEMENT = PATH_TO_DATA_RAW + 'UberMovement/'
     PATH_TO_DATA_UBERMOVEMENT = PATH_TO_DATA + 'UberMovement/'
-    PATH_TO_DATA_UBERMOVEMENT_POLYGONS = PATH_TO_DATA_UBERMOVEMENT + 'city zone polygons/'
+    PATH_TO_DATA_UBERMOVEMENT_ADDITIONAL = PATH_TO_DATA_UBERMOVEMENT + 'additional/'
     PATH_TO_DATA_UBERMOVEMENT_TRAIN = PATH_TO_DATA_UBERMOVEMENT + 'training/'
     PATH_TO_DATA_UBERMOVEMENT_VAL = PATH_TO_DATA_UBERMOVEMENT + 'validation/'
     PATH_TO_DATA_UBERMOVEMENT_TEST = PATH_TO_DATA_UBERMOVEMENT + 'testing/'
@@ -130,7 +130,7 @@ class HyperParameter:
        
         ### Create directories ###
         self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT)
-        self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_POLYGONS)
+        self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_ADDITIONAL)
         self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_TEST)
         self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_VAL)
         self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_TRAIN)
