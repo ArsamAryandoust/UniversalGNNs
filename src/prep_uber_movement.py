@@ -60,10 +60,9 @@ def train_val_test_split(HYPER):
         HYPER.UBERMOVEMENT_LIST_OF_CITIES, 
         n_cities_test
     )
-    list_of_cities_train_val = list(
-        set(HYPER.UBERMOVEMENT_LIST_OF_CITIES) 
-        - set(list_of_cities_test)
-    )
+    
+    # Tell us which cities are chosen for testing
+    print("The following cities are chosen for test", list_of_cities_test)
     
     # decleare empty dataframes for trainining validation and testing
     df_train = pd.DataFrame()
@@ -132,7 +131,6 @@ def train_val_test_split(HYPER):
                 
             else:
                 
-                    
                 # extract the rows from dataframe with matching city zones in origin and destination
                 df_test_city_zones = df_augmented_csvdata.loc[
                     (df_augmented_csvdata['destination_id'].isin(test_city_zone_list)) 
