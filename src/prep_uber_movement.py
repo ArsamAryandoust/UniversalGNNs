@@ -2,6 +2,7 @@ import pandas as pd
 import random
 import gc
 
+
 def import_csvdata(HYPER, city):
 
     """ Imports the Uber Movement data for a passed city """
@@ -19,23 +20,30 @@ def import_csvdata(HYPER, city):
     
     return df_csv_dict_list
     
+ 
     
 def process_csvdata(df_csv_dict, city):
     
     """ """
     
+    # copy raw dataframe
     df_augmented_csvdata = df_csv_dict['df']
-    daytype = df_csv_dict['daytype']
-    quarter = df_csv_dict['quarter']
-    year = df_csv_dict['year']
     
-    df_augmented_csvdata['year'] = year
-    df_augmented_csvdata['quarter'] = quarter
-    df_augmented_csvdata['daytype'] = daytype
-    df_augmented_csvdata['city'] = city 
+    # augment raw dataframe
+    df_augmented_csvdata.insert(0, 'city', city)
+    df_augmented_csvdata.insert(3, 'year', df_csv_dict['year'])
+    df_augmented_csvdata.insert(4, 'quarter_of_year', df_csv_dict['quarter_of_year'])
+    df_augmented_csvdata.insert(5, 'daytype', df_csv_dict['daytype'])
+    
+    # rename some columns with more clear names
+    df_augmented_csvdata.rename(
+        columns={'hod':'hour_of_day', 'sourceid':'source_id', 'dstid':'destination_id'}, 
+        inplace=True
+    )
     
     return df_augmented_csvdata
     
+  
     
 def train_val_test_split(HYPER):
 
@@ -46,6 +54,7 @@ def train_val_test_split(HYPER):
         HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['spatial_dict']['city_share']
         * len(HYPER.UBERMOVEMENT_LIST_OF_CITIES)
     )
+    random.seed(HYPER.SEED)
     list_of_cities_test = random.sample(
         HYPER.UBERMOVEMENT_LIST_OF_CITIES, 
         n_cities_test
@@ -59,6 +68,9 @@ def train_val_test_split(HYPER):
     df_train = pd.DataFrame()
     df_val = pd.DataFrame()
     df_test = pd.DataFrame()
+    
+    # declare data point counters
+    train_chunk_counter, val_chunk_counter, test_chunk_counter = 0, 0, 0
     
     # iterate over all available cities
     for city in HYPER.UBERMOVEMENT_LIST_OF_CITIES:
@@ -83,8 +95,8 @@ def train_val_test_split(HYPER):
             else:
                 testing_year = False
                 
-            # check if testing quarter
-            if df_csv_dict['quarter'] == HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['quarter']:
+            # check if testing quarter of year
+            if df_csv_dict['quarter_of_year'] == HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['quarter_of_year']:
                 testing_quarter = True
             else:
                 testing_quarter = False
@@ -99,8 +111,8 @@ def train_val_test_split(HYPER):
             # get the subset of city zones for test splits once per city
             if iter_csv == 0:
                 n_city_zones = max(
-                    df_augmented_csvdata['sourceid'].max(),
-                    df_augmented_csvdata['dstid'].max()
+                    df_augmented_csvdata['source_id'].max(),
+                    df_augmented_csvdata['destination_id'].max()
                 )
                 
                 # get number of test city zones you want to split
@@ -109,6 +121,7 @@ def train_val_test_split(HYPER):
                 )
                 
                 # randomly sample test city zones
+                random.seed(HYPER.SEED)
                 test_city_zone_list = random.sample(range(n_city_zones), n_test_city_zones)
             
             if testing_city or testing_year or testing_quarter:
@@ -121,8 +134,8 @@ def train_val_test_split(HYPER):
                     
                 # extract the rows from dataframe with matching city zones in origin and destination
                 df_test_city_zones = df_augmented_csvdata.loc[
-                    (df_augmented_csvdata['dstid'].isin(test_city_zone_list)) 
-                    | (df_augmented_csvdata['sourceid'].isin(test_city_zone_list))
+                    (df_augmented_csvdata['destination_id'].isin(test_city_zone_list)) 
+                    | (df_augmented_csvdata['source_id'].isin(test_city_zone_list))
                 ]
                 
                 # set the remaining rows for training and validation
@@ -137,7 +150,9 @@ def train_val_test_split(HYPER):
                 
                 # extract the rows from dataframe with matching hours of data for test
                 df_test_hours_of_day = df_augmented_csvdata.loc[
-                    df_augmented_csvdata['hod'].isin(HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['hours_of_day']) 
+                    df_augmented_csvdata['hour_of_day'].isin(
+                        HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['hours_of_day']
+                    )
                 ]
                 
                 # set the remaining rows for training and validation
@@ -173,45 +188,112 @@ def train_val_test_split(HYPER):
             # free up memory     
             del df_augmented_csvdata   
             gc.collect()
-                    
-    ### Shuffle dataframes and reset indices
-    df_train = df_train.sample(frac=1).reset_index(drop=True)
-    df_val = df_val.sample(frac=1).reset_index(drop=True)
-    df_test = df_test.sample(frac=1).reset_index(drop=True)
-    
-    n_data_train = len(df_train.index)
-    n_data_val = len(df_val.index)
-    n_data_test = len(df_test.index)
-    n_data_total = n_data_train + n_data_val + n_data_test
-    
+            
+            
+            ### Save resulting data in chunks
+            df_train, train_chunk_counter = save_chunk(
+                HYPER,
+                df_train,
+                train_chunk_counter,
+                HYPER.PATH_TO_DATA_UBERMOVEMENT_TRAIN,
+                'training_data'    
+            )
+            df_val, val_chunk_counter = save_chunk(
+                HYPER,
+                df_val,
+                val_chunk_counter,
+                HYPER.PATH_TO_DATA_UBERMOVEMENT_VAL,
+                'validation_data'
+            )
+            df_test, test_chunk_counter = save_chunk(
+                HYPER,
+                df_test,
+                test_chunk_counter,
+                HYPER.PATH_TO_DATA_UBERMOVEMENT_TEST,
+                'testing_data'
+            )
+
     ### Tell us the rations that result from our splitting rules
+    n_train = (train_chunk_counter * HYPER.CHUNK_SIZE_UBERMOVEMENT) + len(df_train.index)
+    n_val = (val_chunk_counter * HYPER.CHUNK_SIZE_UBERMOVEMENT) + len(df_val.index)
+    n_test = (test_chunk_counter * HYPER.CHUNK_SIZE_UBERMOVEMENT) + len(df_test.index)
+    n_total = n_train + n_val + n_test
+    
     print(
-        "Training data   :    {:.0%} \n".format(n_data_train/n_data_total),
-        "Validation data :    {:.0%} \n".format(n_data_val/n_data_total),
-        "Testing data    :    {:.0%} \n".format(n_data_test/n_data_total)
+        "Training data   :    {:.0%} \n".format(n_train/n_total),
+        "Validation data :    {:.0%} \n".format(n_val/n_total),
+        "Testing data    :    {:.0%} \n".format(n_test/n_total)
     )
     
-    ### Save results
-    saving_path_train = (
-        HYPER.PATH_TO_DATA_UBERMOVEMENT_TRAIN 
-        + 'training_data.csv'
+    ### Save results of last iteration
+    df_train, train_chunk_counter = save_chunk(
+        HYPER,
+        df_train,
+        train_chunk_counter,
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_TRAIN,
+        'training_data',
+        last_iteration=True  
     )
-    saving_path_val = (
-        HYPER.PATH_TO_DATA_UBERMOVEMENT_VAL 
-        + 'validation_data.csv'
+    df_val, val_chunk_counter = save_chunk(
+        HYPER,
+        df_val,
+        val_chunk_counter,
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_VAL,
+        'validation_data',
+        last_iteration=True  
     )
-    saving_path_test = (
-        HYPER.PATH_TO_DATA_UBERMOVEMENT_TEST 
-        + 'testing_data.csv'
+    df_test, test_chunk_counter = save_chunk(
+        HYPER,
+        df_test,
+        test_chunk_counter,
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_TEST,
+        'testing_data',
+        last_iteration=True  
     )
-    
-    df_train.to_csv(saving_path_train, index=False)
-    df_val.to_csv(saving_path_val, index=False)
-    df_test.to_csv(saving_path_test, index=False)
     
     return df_train, df_val, df_test
 
 
+
+def save_chunk(
+    HYPER,
+    df,
+    chunk_counter,
+    saving_path,
+    filename,
+    last_iteration=False 
+):
+
+    """ """
+    
+    ### Save resulting data in chunks
+    while len(df.index) > HYPER.CHUNK_SIZE_UBERMOVEMENT or last_iteration:
+        
+        # increment chunk counter 
+        chunk_counter += 1
+        
+        # create path
+        saving_path = (
+            saving_path
+            + filename
+            + '_{}.csv'.format(chunk_counter)
+        )
+        
+        # shuffle
+        df = df.sample(frac=1)
+        
+        # save chunk
+        df.iloc[:HYPER.CHUNK_SIZE_UBERMOVEMENT].to_csv(saving_path, index=False)
+        
+        # delete saved chunk 
+        df = df[:HYPER.CHUNK_SIZE_UBERMOVEMENT]
+        
+        # set false for safety. Should not make a difference though.
+        last_iteration = False
+        
+    return df, chunk_counter
+    
+    
     
 def process_geojson(df_geojson):
 
@@ -267,6 +349,7 @@ def process_geojson(df_geojson):
     return df_latitudes, df_longitudes
 
 
+
 def foster_coordinates_recursive(
     movement_id,
     map_movement_id_to_latitude_coordinates,
@@ -315,6 +398,7 @@ def foster_coordinates_recursive(
     )
 
     return map_movement_id_to_coordinates
+
     
     
 def import_geojson(HYPER, city):
@@ -330,6 +414,7 @@ def import_geojson(HYPER, city):
         
     return df_geojson
     
+ 
     
 def process_all_raw_geojson_data(HYPER):
     
@@ -342,11 +427,11 @@ def process_all_raw_geojson_data(HYPER):
         filename_lat = city + ' lat.csv'
         filename_lon = city + ' lon.csv' 
         saving_path_lat = (
-            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONES 
+            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONS 
             + filename_lat
         )
         saving_path_lon = (
-            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONES 
+            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONS 
             + filename_lon
         )
         df_latitudes.to_csv(saving_path_lat)
