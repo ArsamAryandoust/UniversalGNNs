@@ -20,6 +20,7 @@ def import_csvdata(HYPER, city):
     
     return df_csv_dict_list
     
+ 
     
 def process_csvdata(df_csv_dict, city):
     
@@ -42,6 +43,7 @@ def process_csvdata(df_csv_dict, city):
     
     return df_augmented_csvdata
     
+  
     
 def train_val_test_split(HYPER):
 
@@ -252,6 +254,7 @@ def train_val_test_split(HYPER):
     return df_train, df_val, df_test
 
 
+
 def save_chunk(
     HYPER,
     df,
@@ -346,6 +349,7 @@ def process_geojson(df_geojson):
     return df_latitudes, df_longitudes
 
 
+
 def foster_coordinates_recursive(
     movement_id,
     map_movement_id_to_latitude_coordinates,
@@ -394,6 +398,7 @@ def foster_coordinates_recursive(
     )
 
     return map_movement_id_to_coordinates
+
     
     
 def import_geojson(HYPER, city):
@@ -409,6 +414,7 @@ def import_geojson(HYPER, city):
         
     return df_geojson
     
+ 
     
 def process_all_raw_geojson_data(HYPER):
     
@@ -421,11 +427,11 @@ def process_all_raw_geojson_data(HYPER):
         filename_lat = city + ' lat.csv'
         filename_lon = city + ' lon.csv' 
         saving_path_lat = (
-            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONES 
+            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONS 
             + filename_lat
         )
         saving_path_lon = (
-            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONES 
+            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONS 
             + filename_lon
         )
         df_latitudes.to_csv(saving_path_lat)
