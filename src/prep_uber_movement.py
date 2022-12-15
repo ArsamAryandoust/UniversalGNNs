@@ -22,7 +22,7 @@ def import_csvdata(HYPER, city):
     
  
     
-def process_csvdata(df_csv_dict, city):
+def process_csvdata(HYPER, df_csv_dict, city):
     
     """ """
     
@@ -30,7 +30,7 @@ def process_csvdata(df_csv_dict, city):
     df_augmented_csvdata = df_csv_dict['df']
     
     # augment raw dataframe
-    df_augmented_csvdata.insert(0, 'city', city)
+    df_augmented_csvdata.insert(0, 'city_id', HYPER.UBERMOVEMENT_CITY_ID_MAPPING[city])
     df_augmented_csvdata.insert(3, 'year', df_csv_dict['year'])
     df_augmented_csvdata.insert(4, 'quarter_of_year', df_csv_dict['quarter_of_year'])
     df_augmented_csvdata.insert(5, 'daytype', df_csv_dict['daytype'])
@@ -102,7 +102,7 @@ def train_val_test_split(HYPER):
                 testing_quarter = False
             
             # augment csv
-            df_augmented_csvdata = process_csvdata(df_csv_dict, city)
+            df_augmented_csvdata = process_csvdata(HYPER, df_csv_dict, city)
             
             # free up memory     
             del df_csv_dict['df']
@@ -415,10 +415,34 @@ def import_geojson(HYPER, city):
     return df_geojson
     
  
+def save_city_id_mapping(HYPER):
+    
+    """ """
+    
+    # create dataframe from dictionary
+    df = pd.DataFrame.from_dict(
+        HYPER.UBERMOVEMENT_CITY_ID_MAPPING, 
+        orient='index', 
+        columns=['city_id']
+    )
+    
+    # set filename
+    filename = '0_city_to_id_mapping.csv'
+    
+    # create saving path
+    saving_path = (
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONS 
+        + filename
+    )
+    
+    # save 
+    df.to_csv(saving_path)
     
 def process_all_raw_geojson_data(HYPER):
     
     """ """
+    
+    save_city_id_mapping(HYPER)
     
     for city in HYPER.UBERMOVEMENT_LIST_OF_CITIES:
         df_geojson = import_geojson(HYPER, city)

@@ -77,7 +77,8 @@ class HyperParameter:
         quarter_list = ['-1-', '-2-', '-3-', '-4-']
         self.UBERMOVEMENT_LIST_OF_CITIES = os.listdir(self.PATH_TO_DATA_RAW_UBERMOVEMENT)[:5]
         self.UBERMOVEMENT_CITY_FILES_MAPPING = {}
-        for city in self.UBERMOVEMENT_LIST_OF_CITIES:
+        self.UBERMOVEMENT_CITY_ID_MAPPING = {}
+        for city_id, city in enumerate(self.UBERMOVEMENT_LIST_OF_CITIES):
             path_to_city = self.PATH_TO_DATA_RAW_UBERMOVEMENT + city + '/'
             file_list = os.listdir(path_to_city)
             csv_file_dict_list = []
@@ -116,11 +117,15 @@ class HyperParameter:
                     # append csv file dictionary to list
                     csv_file_dict_list.append(csv_file_dict)
                     
+            # create file name dictionary
             file_dict = {
                 'json' : json,
                 'csv_file_dict_list': csv_file_dict_list
             }
+            
+            # save 
             self.UBERMOVEMENT_CITY_FILES_MAPPING[city] = file_dict
+            self.UBERMOVEMENT_CITY_ID_MAPPING[city] = city_id
             
        
         ### Create directories ###
