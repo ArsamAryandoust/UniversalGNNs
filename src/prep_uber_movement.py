@@ -415,6 +415,7 @@ def import_geojson(HYPER, city):
         
     return df_geojson
     
+    
  
 def save_city_id_mapping(HYPER):
     
@@ -439,11 +440,16 @@ def save_city_id_mapping(HYPER):
     # save 
     df.to_csv(saving_path)
     
+    return df
+    
+    
+    
 def process_all_raw_geojson_data(HYPER):
     
     """ """
     
-    save_city_id_mapping(HYPER)
+    # get the resulting mapping
+    df_city_id_mapping = save_city_id_mapping(HYPER)
     
     for city in HYPER.UBERMOVEMENT_LIST_OF_CITIES:
         df_geojson = import_geojson(HYPER, city)
@@ -462,6 +468,9 @@ def process_all_raw_geojson_data(HYPER):
         df_latitudes.to_csv(saving_path_lat)
         df_longitudes.to_csv(saving_path_lon)
         
+    return df_city_id_mapping
+    
+    
 
 def shuffle_data_files(
     HYPER,
