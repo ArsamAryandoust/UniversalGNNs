@@ -11,8 +11,8 @@ class HyperParameter:
     # Random seed
     SEED = 3
     
-    ### Data paths ###
     
+    ### Data paths ###
     
     # general
     PATH_TO_DATA = '../data/'
@@ -42,7 +42,7 @@ class HyperParameter:
     ### Training, validation, testing splits ###
     
     # Chunk size of data points per .csv file
-    CHUNK_SIZE_UBERMOVEMENT = 10_000_000
+    CHUNK_SIZE_UBERMOVEMENT = 20_000_000
     
     # share to split training and validation data
     TRAIN_VAL_SPLIT_UBERMOVEMENT = 0.5
@@ -92,9 +92,9 @@ class HyperParameter:
                     
                     # determine if weekday
                     if 'OnlyWeekdays' in filename:
-                        weekday = 1
+                        daytype = 1
                     elif 'OnlyWeekends' in filename:
-                        weekday = 0
+                        daytype = 0
                     
                     # determine year
                     for year in year_list:
@@ -108,7 +108,7 @@ class HyperParameter:
                             break
                     
                     # fill dictionary with desired values
-                    csv_file_dict['weekday'] = weekday
+                    csv_file_dict['daytype'] = daytype
                     csv_file_dict['year'] = year
                     csv_file_dict['quarter_of_year'] = quarter_of_year
                     csv_file_dict['filename'] = filename

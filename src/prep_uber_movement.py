@@ -25,12 +25,20 @@ def process_csvdata(df_csv_dict, city):
     
     """ """
     
+    # copy raw dataframe
     df_augmented_csvdata = df_csv_dict['df']
-    df_augmented_csvdata['year'] = df_csv_dict['year']
-    df_augmented_csvdata['quarter_of_year'] = df_csv_dict['quarter_of_year']
-    df_augmented_csvdata['weekday'] = df_csv_dict['weekday']
-    df_augmented_csvdata['city'] = city
-    df_augmented_csvdata.rename(columns={'hod':'hour_of_day'}, inplace=True)
+    
+    # augment raw dataframe
+    df_augmented_csvdata.insert(0, 'city', city)
+    df_augmented_csvdata.insert(3, 'year', df_csv_dict['year'])
+    df_augmented_csvdata.insert(4, 'quarter_of_year', df_csv_dict['quarter_of_year'])
+    df_augmented_csvdata.insert(5, 'daytype', df_csv_dict['daytype'])
+    
+    # rename some columns with more clear names
+    df_augmented_csvdata.rename(
+        columns={'hod':'hour_of_day', 'sourceid':'source_id', 'dstid':'destination_id'}, 
+        inplace=True
+    )
     
     return df_augmented_csvdata
     
@@ -101,8 +109,8 @@ def train_val_test_split(HYPER):
             # get the subset of city zones for test splits once per city
             if iter_csv == 0:
                 n_city_zones = max(
-                    df_augmented_csvdata['sourceid'].max(),
-                    df_augmented_csvdata['dstid'].max()
+                    df_augmented_csvdata['source_id'].max(),
+                    df_augmented_csvdata['destination_id'].max()
                 )
                 
                 # get number of test city zones you want to split
@@ -124,8 +132,8 @@ def train_val_test_split(HYPER):
                     
                 # extract the rows from dataframe with matching city zones in origin and destination
                 df_test_city_zones = df_augmented_csvdata.loc[
-                    (df_augmented_csvdata['dstid'].isin(test_city_zone_list)) 
-                    | (df_augmented_csvdata['sourceid'].isin(test_city_zone_list))
+                    (df_augmented_csvdata['destination_id'].isin(test_city_zone_list)) 
+                    | (df_augmented_csvdata['source_id'].isin(test_city_zone_list))
                 ]
                 
                 # set the remaining rows for training and validation
@@ -140,7 +148,9 @@ def train_val_test_split(HYPER):
                 
                 # extract the rows from dataframe with matching hours of data for test
                 df_test_hours_of_day = df_augmented_csvdata.loc[
-                    df_augmented_csvdata['hod'].isin(HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['hours_of_day']) 
+                    df_augmented_csvdata['hour_of_day'].isin(
+                        HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['hours_of_day']
+                    )
                 ]
                 
                 # set the remaining rows for training and validation
