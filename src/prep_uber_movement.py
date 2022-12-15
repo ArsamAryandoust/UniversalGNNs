@@ -280,7 +280,7 @@ def save_chunk(
         )
         
         # shuffle
-        df = df.sample(frac=1)
+        df = df.sample(frac=1, random_state=HYPER.SEED)
         
         # save chunk
         df.iloc[:HYPER.CHUNK_SIZE_UBERMOVEMENT].to_csv(saving_path, index=False)
@@ -415,6 +415,7 @@ def import_geojson(HYPER, city):
         
     return df_geojson
     
+    
  
 def save_city_id_mapping(HYPER):
     
@@ -432,18 +433,23 @@ def save_city_id_mapping(HYPER):
     
     # create saving path
     saving_path = (
-        HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONS 
+        HYPER.PATH_TO_DATA_UBERMOVEMENT_ADDITIONAL 
         + filename
     )
     
     # save 
     df.to_csv(saving_path)
     
+    return df
+    
+    
+    
 def process_all_raw_geojson_data(HYPER):
     
     """ """
     
-    save_city_id_mapping(HYPER)
+    # get the resulting mapping
+    df_city_id_mapping = save_city_id_mapping(HYPER)
     
     for city in HYPER.UBERMOVEMENT_LIST_OF_CITIES:
         df_geojson = import_geojson(HYPER, city)
@@ -452,16 +458,19 @@ def process_all_raw_geojson_data(HYPER):
         filename_lat = city + ' lat.csv'
         filename_lon = city + ' lon.csv' 
         saving_path_lat = (
-            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONS 
+            HYPER.PATH_TO_DATA_UBERMOVEMENT_ADDITIONAL 
             + filename_lat
         )
         saving_path_lon = (
-            HYPER.PATH_TO_DATA_UBERMOVEMENT_POLYGONS 
+            HYPER.PATH_TO_DATA_UBERMOVEMENT_ADDITIONAL 
             + filename_lon
         )
         df_latitudes.to_csv(saving_path_lat)
         df_longitudes.to_csv(saving_path_lon)
         
+    return df_city_id_mapping
+    
+    
 
 def shuffle_data_files(
     HYPER,
@@ -522,7 +531,7 @@ def shuffle_data_files(
             gc.collect()
             
             # shuffle
-            df = df.sample(frac=1)
+            df = df.sample(frac=1, random_state=HYPER.SEED)
             
             # iterate over sampled files and n_data_points simultaneously
             for filename, n_data_points in zip(sampled_files, n_data_points_list):

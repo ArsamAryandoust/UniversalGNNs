@@ -21,7 +21,7 @@ class HyperParameter:
     # Uber Movement
     PATH_TO_DATA_RAW_UBERMOVEMENT = PATH_TO_DATA_RAW + 'UberMovement/'
     PATH_TO_DATA_UBERMOVEMENT = PATH_TO_DATA + 'UberMovement/'
-    PATH_TO_DATA_UBERMOVEMENT_POLYGONS = PATH_TO_DATA_UBERMOVEMENT + 'city zone polygons/'
+    PATH_TO_DATA_UBERMOVEMENT_ADDITIONAL = PATH_TO_DATA_UBERMOVEMENT + 'additional/'
     PATH_TO_DATA_UBERMOVEMENT_TRAIN = PATH_TO_DATA_UBERMOVEMENT + 'training/'
     PATH_TO_DATA_UBERMOVEMENT_VAL = PATH_TO_DATA_UBERMOVEMENT + 'validation/'
     PATH_TO_DATA_UBERMOVEMENT_TEST = PATH_TO_DATA_UBERMOVEMENT + 'testing/'
@@ -31,6 +31,11 @@ class HyperParameter:
     PATH_TO_DATA_RAW_CLIMART_INPUTS = PATH_TO_DATA_RAW_CLIMART + 'inputs/'
     PATH_TO_DATA_RAW_CLIMART_OUTPUTS_CLEAR_SKY = PATH_TO_DATA_RAW_CLIMART + 'outputs_clear_sky/'
     PATH_TO_DATA_RAW_CLIMART_OUTPUTS_PRISTINE = PATH_TO_DATA_RAW_CLIMART + 'outputs_pristine/'
+    PATH_TO_DATA_CLIMART = PATH_TO_DATA + 'ClimART/'
+    PATH_TO_DATA_CLIMART_ADDITIONAL = PATH_TO_DATA_CLIMART + 'additional/'
+    PATH_TO_DATA_CLIMART_TRAIN = PATH_TO_DATA_CLIMART + 'training/'
+    PATH_TO_DATA_CLIMART_VAL = PATH_TO_DATA_CLIMART + 'validation/'
+    PATH_TO_DATA_CLIMART_TEST = PATH_TO_DATA_CLIMART + 'testing/'
     
     
     # Open Catalyst
@@ -128,12 +133,25 @@ class HyperParameter:
             self.UBERMOVEMENT_CITY_ID_MAPPING[city] = city_id
             
        
-        ### Create directories ###
+        ### Create directories for Uber Movement ###
         self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT)
-        self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_POLYGONS)
+        self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_ADDITIONAL)
         self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_TEST)
         self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_VAL)
         self.check_create_dir(self.PATH_TO_DATA_UBERMOVEMENT_TRAIN)
+        
+        
+        ### ClimART ###
+        
+        
+           
+        ### Create directories for CLimART ###
+        self.check_create_dir(self.PATH_TO_DATA_CLIMART)
+        self.check_create_dir(self.PATH_TO_DATA_CLIMART_ADDITIONAL) 
+        self.check_create_dir(self.PATH_TO_DATA_CLIMART_TRAIN)
+        self.check_create_dir(self.PATH_TO_DATA_CLIMART_VAL)
+        self.check_create_dir(self.PATH_TO_DATA_CLIMART_TEST)
+           
            
     def check_create_dir(self, path):
     
