@@ -2,6 +2,7 @@ import pandas as pd
 import random
 import gc
 
+
 def import_csvdata(HYPER, city):
 
     """ Imports the Uber Movement data for a passed city """
@@ -25,14 +26,11 @@ def process_csvdata(df_csv_dict, city):
     """ """
     
     df_augmented_csvdata = df_csv_dict['df']
-    daytype = df_csv_dict['daytype']
-    quarter = df_csv_dict['quarter']
-    year = df_csv_dict['year']
-    
-    df_augmented_csvdata['year'] = year
-    df_augmented_csvdata['quarter'] = quarter
-    df_augmented_csvdata['daytype'] = daytype
-    df_augmented_csvdata['city'] = city 
+    df_augmented_csvdata['year'] = df_csv_dict['year']
+    df_augmented_csvdata['quarter_of_year'] = df_csv_dict['quarter_of_year']
+    df_augmented_csvdata['weekday'] = df_csv_dict['weekday']
+    df_augmented_csvdata['city'] = city
+    df_augmented_csvdata.rename(columns={'hod':'hour_of_day'}, inplace=True)
     
     return df_augmented_csvdata
     
@@ -46,6 +44,7 @@ def train_val_test_split(HYPER):
         HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['spatial_dict']['city_share']
         * len(HYPER.UBERMOVEMENT_LIST_OF_CITIES)
     )
+    random.seed(HYPER.SEED)
     list_of_cities_test = random.sample(
         HYPER.UBERMOVEMENT_LIST_OF_CITIES, 
         n_cities_test
@@ -86,8 +85,8 @@ def train_val_test_split(HYPER):
             else:
                 testing_year = False
                 
-            # check if testing quarter
-            if df_csv_dict['quarter'] == HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['quarter']:
+            # check if testing quarter of year
+            if df_csv_dict['quarter_of_year'] == HYPER.TEST_SPLIT_DICT_UBERMOVEMENT['temporal_dict']['quarter_of_year']:
                 testing_quarter = True
             else:
                 testing_quarter = False
@@ -112,6 +111,7 @@ def train_val_test_split(HYPER):
                 )
                 
                 # randomly sample test city zones
+                random.seed(HYPER.SEED)
                 test_city_zone_list = random.sample(range(n_city_zones), n_test_city_zones)
             
             if testing_city or testing_year or testing_quarter:
