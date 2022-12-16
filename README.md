@@ -1,10 +1,23 @@
-# Enhancing AutoML for tackling climate change with universal deep learning models
+# Tackling climate change with universal graph neural networks for multi-task transfer learning 
 
-We explore universal deep learning models that are able to solve important climate
-change related prediction tasks. We demonstrate these here on three prediction tasks:
-first, the prediction of travel times between different city zones that are used 
-to infer car parking density maps for the urban planning of electric mobility; 
-second, the prediction of cost-effective materials for new storage technologies 
+We seek a universal graph representation of data that is able to capture arbitrary
+events described by arbitary data types. Our goal is to develop a universal deep 
+learning model that is then able to solve multiple tasks from multiple domains 
+using a single model instance by sharing model parameters through a backbone graph 
+neural network.
+
+We want to test whether using a single model instance for solving multiple tasks 
+can save computation and increase prediction accuracy compared to using different 
+models on each task. Our intuiton is that we can leverage already performed computation
+for solving some tasks for better solving another set of both related and unrelated 
+tasks. If this is found to be true, we indicate that such a universal can achieve
+a general task-independent level of artificial intelligence. 
+
+
+We test this here on three prediction tasks that are unrelated in terms of data
+they use: first, the prediction of travel times between different city zones that 
+are used to infer car parking density maps for the urban planning of electric 
+mobility; second, the prediction of cost-effective materials for new storage technologies 
 and solar fuels; third, the prediction of atmospheric radiative transfer that is 
 crucial for weather and climate models.
 
