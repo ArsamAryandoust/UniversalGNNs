@@ -1,4 +1,4 @@
-# Tackling climate change with universal graph neural networks for multi-task transfer learning 
+# Enhancing the energy transition with universal graph neural networks for multi-task transfer learning 
 
 We seek a universal graph representation of data that is able to capture arbitrary
 events described by arbitary data types. Our goal is to develop a universal deep 
@@ -14,10 +14,11 @@ tasks. If this is found to be true, we indicate that such a universal can achiev
 a general task-independent level of artificial intelligence. 
 
 
-We test this here on three prediction tasks that are unrelated in terms of data
-they use: first, the prediction of travel times between different city zones that 
-are used to infer car parking density maps for the urban planning of electric 
-mobility; second, the prediction of cost-effective materials for new storage technologies 
+We test this here on three prediction tasks that are important for enhancing the
+global energy transition, and are unrelated in terms of the data they involve: 
+first, the prediction of travel times between different city zones that are used 
+to infer car parking density maps for the urban planning of electric mobility; 
+second, the prediction of cost-effective materials for new storage technologies 
 and solar fuels; third, the prediction of atmospheric radiative transfer that is 
 crucial for weather and climate models.
 
