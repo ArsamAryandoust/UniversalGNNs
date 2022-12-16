@@ -6,8 +6,68 @@ import pandas as pd
 import gc
 
 
+def create_input_col_name_list(
+    var_dict
+):
+    
+    """ """
+
+    # declare empty column names list
+    col_names_list = []
+    
+    # iterate over variable name dict
+    for var_name in var_dict:
+        
+        # get dict with start and end range of current variable
+        var_range_dict = var_dict[var_name]
+        
+        # get range size
+        range_size = var_range_dict['end'] - var_range_dict['start']
+        
+        # append column name to list if range size is only 1
+        if range_size == 1:
+            col_names_list.append(var_name)
+            
+        elif range_size >1:
+            
+            for feature_iter in range(range_size):
+                col_name = var_name + '_{}'.format(feature_iter)
+                col_names_list.append(col_name)
+                
+        else:
+        
+            print('Caution. Something went wrong with creating column names')
+    
+    return col_names_list
+
+
+
+def create_output_col_name_list(
+    var_name,
+    var_dict
+):
+    
+    """ """
+    
+    # get variable range dictionary
+    var_range_dict = var_dict[var_name]
+    
+    # declare empty column names list
+    col_names_list = []
+    
+    # get range size
+    range_size = var_range_dict['end'] - var_range_dict['start']
+    
+    # append column name to list if range size is only 1
+    for feature_iter in range(range_size):
+        col_name = var_name + '_{}'.format(feature_iter)
+        col_names_list.append(col_name)
+
+    return col_names_list
+
 
 def process_raw_data(
+    feature_by_var,
     inputs, 
     outputs_clear_sky, 
     outputs_pristine
@@ -28,8 +88,12 @@ def process_raw_data(
     # retrieve data and tranform into numpy arrays
     data = np.array(inputs['globals'])
     
+    # create column names
+    var_dict = feature_by_var['globals']
+    col_names_list = create_input_col_name_list(var_dict)
+    
     # transform into dataframe
-    data = pd.DataFrame(data)
+    data = pd.DataFrame(data, columns=col_names_list)
     
     # append to input dataframes
     df_inputs_clear_sky = pd.concat([df_inputs_clear_sky, data], axis=1)
@@ -42,13 +106,18 @@ def process_raw_data(
     data = np.array(inputs['layers'])
     data_pristine = np.array(inputs['layers'][:, :, :14])
     
+    # create column names
+    var_dict = feature_by_var['layers']
+    col_names_list = create_input_col_name_list(var_dict)
+    col_names_list_pristine = col_names_list[:14].copy()
+    
     # reshape data
-    data = reshape(data)
-    data_pristine = reshape(data_pristine)
+    data, col_names_list = reshape(data, col_names_list)
+    data_pristine, col_names_list_pristine = reshape(data_pristine, col_names_list_pristine)
     
     # transform into dataframe
-    data = pd.DataFrame(data)
-    data_pristine = pd.DataFrame(data_pristine)
+    data = pd.DataFrame(data, columns=col_names_list)
+    data_pristine = pd.DataFrame(data_pristine, columns=col_names_list_pristine)
     
     # append to input dataframes
     df_inputs_clear_sky = pd.concat([df_inputs_clear_sky, data], axis=1) 
@@ -64,11 +133,15 @@ def process_raw_data(
     # retrieve data and tranform into numpy arrays
     data = np.array(inputs['levels'])
     
+    # create column names
+    var_dict = feature_by_var['levels']
+    col_names_list = create_input_col_name_list(var_dict)
+    
     # reshape data
-    data = reshape(data)
+    data, col_names_list = reshape(data, col_names_list)
     
     # transform into dataframe
-    data = pd.DataFrame(data)
+    data = pd.DataFrame(data, columns=col_names_list)
     
     # append to input dataframes
     df_inputs_clear_sky = pd.concat([df_inputs_clear_sky, data], axis=1)
@@ -94,9 +167,16 @@ def process_raw_data(
         data_clear_sky = np.array(outputs_clear_sky[key_clear_sky])
         data_pristine = np.array(outputs_pristine[key_pristine])
         
+        # create column names
+        var_dict_clear_sky = feature_by_var['outputs_clear_sky']
+        col_names_list_outputs_clear_sky = create_output_col_name_list(key_clear_sky, var_dict_clear_sky)
+        
+        var_dict_pristine = feature_by_var['outputs_pristine']
+        col_names_list_output_pristine = create_output_col_name_list(key_pristine, var_dict_pristine)
+        
         # transform into dataframe
-        data_clear_sky = pd.DataFrame(data_clear_sky)
-        data_pristine = pd.DataFrame(data_pristine)
+        data_clear_sky = pd.DataFrame(data_clear_sky, columns=col_names_list_outputs_clear_sky)
+        data_pristine = pd.DataFrame(data_pristine, columns=col_names_list_output_pristine)
         
         # append to input dataframes
         df_outputs_clear_sky = pd.concat([df_outputs_clear_sky, data_clear_sky], axis=1)
@@ -106,18 +186,41 @@ def process_raw_data(
     return df_inputs_clear_sky, df_inputs_pristine, df_outputs_clear_sky, df_outputs_pristine
 
 
-def reshape(data):
 
+def reshape(data, col_names_list):
+
+    """ """
+    
     # get number of data points
     n_data = len(data)
+    n_steps = data.shape[1]
+    n_features = data.shape[2]
     
     # get number of columns for desired reshaping
-    n_columns = data.shape[1] * data.shape[2]
+    n_columns = n_steps * n_features
     
-    # reshape
+    # reshape with C order
     data = np.reshape(data, (n_data, n_columns), order='C')
     
-    return data
+    # declare new empty column names list
+    expanded_col_names_list = []
+    
+    # expand col_names_list according to reshape with C order
+    for steps in range(n_steps):
+        
+        # iterate over all column names
+        for col_name in col_names_list:
+            
+            # create entry
+            entry= 'l_{}_{}'.format(steps, col_name)
+            
+            # append entry
+            expanded_col_names_list.append(entry)
+            
+        
+    return data, expanded_col_names_list
+
+
 
 def import_h5_data(HYPER, year):
 
@@ -148,6 +251,7 @@ def import_h5_data(HYPER, year):
     return inputs, outputs_clear_sky, outputs_pristine
     
 
+
 def visualize_raw_keys_and_shapes(dataset, name):
     
     """ """
@@ -157,6 +261,7 @@ def visualize_raw_keys_and_shapes(dataset, name):
     for key in dataset_key_list:
         value = dataset[key]
         print('\n{}: \n{}'.format(key, value.shape))
+
 
 
 def import_data_stats(HYPER):
@@ -182,6 +287,7 @@ def import_data_stats(HYPER):
         stats_dict[variable_name] = np.load(path_to_file)
     
     return stats_dict
+    
     
     
 def import_meta_json(HYPER):
