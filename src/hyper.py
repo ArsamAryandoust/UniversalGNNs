@@ -28,6 +28,7 @@ class HyperParameter:
     
     # ClimART
     PATH_TO_DATA_RAW_CLIMART = PATH_TO_DATA_RAW + 'ClimART/'
+    PATH_TO_DATA_RAW_CLIMART_STATISTICS = PATH_TO_DATA_RAW_CLIMART + 'statistics/'
     PATH_TO_DATA_RAW_CLIMART_INPUTS = PATH_TO_DATA_RAW_CLIMART + 'inputs/'
     PATH_TO_DATA_RAW_CLIMART_OUTPUTS_CLEAR_SKY = PATH_TO_DATA_RAW_CLIMART + 'outputs_clear_sky/'
     PATH_TO_DATA_RAW_CLIMART_OUTPUTS_PRISTINE = PATH_TO_DATA_RAW_CLIMART + 'outputs_pristine/'
@@ -143,8 +144,13 @@ class HyperParameter:
         
         ### ClimART ###
         
+        # save a list with names of meta file names
+        self.CLIMART_META_FILENAMES_DICT = {
+            'meta':'META_INFO.json',
+            'stats':'statistics.npz'
+        }
         
-           
+        
         ### Create directories for CLimART ###
         self.check_create_dir(self.PATH_TO_DATA_CLIMART)
         self.check_create_dir(self.PATH_TO_DATA_CLIMART_ADDITIONAL) 
