@@ -370,15 +370,44 @@ def train_val_test_split(
     list_of_years = os.listdir(HYPER.PATH_TO_DATA_RAW_CLIMART_INPUTS)
     
     # remove file ending from list of years and turn into integer values
-    list_of_years = [list_entry[:-1] for list_entry in list_of_years]
+    list_of_years = [list_entry[:-3] for list_entry in list_of_years]
+    
+    # import meta data
+    _, _, feature_by_var = import_meta_json(HYPER)
     
     for year in list_of_years:
     
-        print(year)
+        # import inputs and outputs
+        inputs, outputs_clear_sky, outputs_pristine = import_h5_data(HYPER, year)
+        
+        # process raw data
+        (
+            df_inputs_clear_sky, 
+            df_inputs_pristine, 
+            df_outputs_clear_sky, 
+            df_outputs_pristine
+        ) = process_raw_data(
+            feature_by_var,
+            inputs, 
+            outputs_clear_sky, 
+            outputs_pristine
+        )
+        
+        # free up memory
+        del inputs, outputs_clear_sky, outputs_pristine
+        gc.collect()
     
-    
-    
-    
+        # augment and merge data
+        df_clear_sky, df_pristine = augment_and_merge(
+            year,
+            df_inputs_clear_sky, 
+            df_inputs_pristine, 
+            df_outputs_clear_sky, 
+            df_outputs_pristine
+        )
+        
+        
+        
     
     
     
