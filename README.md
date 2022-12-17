@@ -61,4 +61,5 @@ Compute using GPUs too:
 docker run -it --gpus all -v ~/UniversalGNNs:/UniversalGNNs -p 3333:1111 main_notebook
 ```
 
-
+Open the link that shows in your terminal with a browser. Then, replace the port 
+1111 with 3333 in your browser link to see notebooks inside the Docker container.
