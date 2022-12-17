@@ -289,7 +289,6 @@ def import_data_stats(HYPER):
     return stats_dict
     
     
-    
 def import_meta_json(HYPER):
 
     """ """
@@ -307,3 +306,55 @@ def import_meta_json(HYPER):
     feature_by_var = meta_dict['feature_by_var']
     
     return input_dims, variables, feature_by_var
+    
+    
+def augment_and_merge(
+    year,
+    df_inputs_clear_sky, 
+    df_inputs_pristine, 
+    df_outputs_clear_sky, 
+    df_outputs_pristine
+):
+
+    """ """
+    
+    # concatenate dataframes
+    df_clear_sky = pd.concat([df_inputs_clear_sky, df_outputs_clear_sky], axis=1)
+    df_pristine = pd.concat([df_inputs_pristine, df_outputs_pristine], axis=1)
+    
+    # calculate for each data point the hour of year
+    n_lat, n_lon, n_hours_per_step = 64, 128, 205
+    n_points_space = n_lat * n_lon
+    hour_of_year = (
+        np.floor(df_clear_sky.index.values / n_points_space) * n_hours_per_step
+    ).astype(int)
+    
+    # calculate lat and lon coordinates
+    lat = np.arcsin(df_clear_sky['z_cord'])
+    lon = np.arccos(df_clear_sky['x_cord'] / np.cos(lat))
+    
+    # augment data with latitudes
+    df_clear_sky.insert(0, 'lat', lat)
+    df_pristine.insert(0, 'lat', lat)
+    
+    # augment data with longitudes
+    df_clear_sky.insert(1, 'lon', lon)
+    df_pristine.insert(1, 'lon', lon)
+    
+    # drop geographic columns we do not need anymore
+    df_clear_sky.drop(columns=['x_cord', 'y_cord', 'z_cord'])
+    df_pristine.drop(columns=['x_cord', 'y_cord', 'z_cord'])
+    
+    # augment data with year
+    df_clear_sky.insert(2, 'year', year)
+    df_pristine.insert(2, 'year', year)
+    
+    # augment data with hour of year
+    df_clear_sky.insert(3, 'hour_of_year', hour_of_year)
+    df_pristine.insert(3, 'hour_of_year', hour_of_year)
+    
+    
+    return df_clear_sky, df_pristine
+    
+    
+    
