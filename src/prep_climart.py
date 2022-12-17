@@ -4,7 +4,7 @@ import json
 import h5py
 import pandas as pd
 import gc
-
+import math
 
 def create_input_col_name_list(
     var_dict
@@ -330,24 +330,27 @@ def augment_and_merge(
     ).astype(int)
     
     # calculate lat and lon coordinates
-    lat = np.arcsin(df_clear_sky['z_cord'])
-    lon = np.arccos(df_clear_sky['x_cord'] / np.cos(lat))
+    lat_clear_sky = np.arcsin(df_clear_sky['z_cord'])
+    lat_pristine = np.arcsin(df_pristine['z_cord'])
+    
+    lon_clear_sky = np.arccos(df_clear_sky['x_cord'] / np.cos(lat_clear_sky))
+    lon_pristine = np.arccos(df_pristine['x_cord'] / np.cos(lat_pristine))
     
     # augment data with latitudes
-    df_clear_sky.insert(0, 'lat', lat)
-    df_pristine.insert(0, 'lat', lat)
+    df_clear_sky.insert(0, 'lat', lat_clear_sky / math.pi * 180)
+    df_pristine.insert(0, 'lat', lat_pristine / math.pi * 180)
     
     # augment data with longitudes
-    df_clear_sky.insert(1, 'lon', lon)
-    df_pristine.insert(1, 'lon', lon)
+    df_clear_sky.insert(1, 'lon', lon_clear_sky / math.pi * 180)
+    df_pristine.insert(1, 'lon', lon_pristine / math.pi * 180)
     
     # drop geographic columns we do not need anymore
     df_clear_sky.drop(columns=['x_cord', 'y_cord', 'z_cord'])
     df_pristine.drop(columns=['x_cord', 'y_cord', 'z_cord'])
     
     # augment data with year
-    df_clear_sky.insert(2, 'year', year)
-    df_pristine.insert(2, 'year', year)
+    df_clear_sky.insert(2, 'year', int(year))
+    df_pristine.insert(2, 'year', int(year))
     
     # augment data with hour of year
     df_clear_sky.insert(3, 'hour_of_year', hour_of_year)
@@ -355,6 +358,30 @@ def augment_and_merge(
     
     
     return df_clear_sky, df_pristine
+    
+    
+def train_val_test_split(
+    HYPER
+):
+
+    """ """
+    
+    # list all data available in one of the raw data foulders.
+    list_of_years = os.listdir(HYPER.PATH_TO_DATA_RAW_CLIMART_INPUTS)
+    
+    # remove file ending from list of years and turn into integer values
+    list_of_years = [list_entry[:-1] for list_entry in list_of_years]
+    
+    for year in list_of_years:
+    
+        print(year)
+    
+    
+    
+    
+    
+    
+    
     
     
     
