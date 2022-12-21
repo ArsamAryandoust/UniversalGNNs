@@ -1,4 +1,4 @@
-# Universal graph neural networks for multi-task transfer learning 
+# Universal graph neural networks for multi-modal multi-task learning 
 
 We seek a universal graph representation of data that is able to capture arbitrary
 events described by arbitary data types. Our goal is to develop a universal deep 
@@ -8,19 +8,20 @@ neural network.
 
 We want to test whether using a single model instance for solving multiple tasks 
 can save computation and increase prediction accuracy compared to using different 
-models on each task. Our intuiton is that we can leverage already performed computation
-for solving some tasks for better solving another set of both related and unrelated 
-tasks. If this is found to be true, we indicate that such a universal can achieve
-a general task-independent level of artificial intelligence. 
+models on each task. We hypothesize that already performed computation for solving 
+some tasks can be leveraged for better solving other sets of related and unrelated 
+tasks. If this is found to be true, our results will indicate that multi-modal
+multi-task deep learning models can achieve a general level of task-independent 
+intelligence that needs to be further explored. 
 
-
-We test this here on three prediction tasks that are important for enhancing the
-global energy transition, and are unrelated in terms of the data they involve: 
-first, the prediction of travel times between different city zones that are used 
-to infer car parking density maps for the urban planning of electric mobility; 
-second, the prediction of cost-effective materials for new storage technologies 
-and solar fuels; third, the prediction of atmospheric radiative transfer that is 
-crucial for weather and climate models.
+In the following, we empirically test our hypothesis on three prediction tasks that 
+are important for enhancing the global energy transition, and are independent from
+each other in terms of the data they involve: first, we predict travel times between 
+different city zones that are measured by Uber and are used to infer car parking 
+patterns for the urban planning of electric mobility; second, we predict atmospheric 
+radiative transfer that is modeled by the Canadian Earth System Model and is important
+for reducing the sparsity of such physiscs informed models due to their high
+computational complexity.
 
 
 ## Download
