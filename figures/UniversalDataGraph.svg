@@ -28,12 +28,12 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="1.2432572"
-     inkscape:cx="314.89864"
-     inkscape:cy="246.52984"
+     inkscape:cx="258.59492"
+     inkscape:cy="247.33418"
      inkscape:window-width="1965"
      inkscape:window-height="976"
-     inkscape:window-x="3096"
-     inkscape:window-y="67"
+     inkscape:window-x="2368"
+     inkscape:window-y="49"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer1" />
   <defs
@@ -285,7 +285,7 @@
          x="63.438721"
          y="54.558285">a<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan1588">s</tspan></tspan></text>
+   id="tspan1588">2,(5,1)</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:5.29167px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
@@ -322,16 +322,16 @@
     <text
        xml:space="preserve"
        style="font-size:5.29167px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
-       x="66.400032"
-       y="79.049728"
+       x="62.695862"
+       y="79.578896"
        id="text275-8-5"><tspan
          sodipodi:role="line"
          id="tspan273-7-9"
          style="stroke-width:0.264583"
-         x="66.400032"
-         y="79.049728">a<tspan
+         x="62.695862"
+         y="79.578896">a<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan1588-2">t,s</tspan></tspan></text>
+   id="tspan1588-2">(1,2),(1,5)</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:5.29167px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
@@ -355,68 +355,68 @@
          x="96.920654"
          y="81.984673">a<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan1588-9">t</tspan></tspan></text>
+   id="tspan1588-9">(1,2),1</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:5.29167px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
-       x="134.38336"
-       y="10.402346"
+       x="119.03761"
+       y="9.8731794"
        id="text1777"><tspan
          sodipodi:role="line"
          id="tspan1775"
          style="font-size:4.63021px;stroke-width:0.264583"
-         x="134.38336"
-         y="10.402346"><tspan
+         x="119.03761"
+         y="9.8731794"><tspan
    style="font-size:5.29167px"
    id="tspan459">n</tspan><tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan456">t,s </tspan><tspan
+   id="tspan456">t,s</tspan><tspan
    style="font-size:5.29167px"
-   id="tspan2573">=</tspan> <tspan
+   id="tspan2573">            =</tspan> <tspan
    style="font-size:4.23333px"
    id="tspan457">node in space-time</tspan></tspan><tspan
          sodipodi:role="line"
          style="stroke-width:0.264583"
-         x="134.38336"
-         y="17.016933"
+         x="119.03761"
+         y="16.487766"
          id="tspan2569">a<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan1789">t </tspan> =<tspan
+   id="tspan1789">(t1,t2),s </tspan>      =<tspan
    style="font-size:4.23333px"
    id="tspan1783"> temporal adjacency</tspan></tspan><tspan
          sodipodi:role="line"
          style="stroke-width:0.264583"
-         x="134.38336"
-         y="23.631519"
+         x="119.03761"
+         y="23.102354"
          id="tspan1779">a<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan1791">s </tspan> = <tspan
+   id="tspan1791">t,(s1,s2) </tspan>      = <tspan
    style="font-size:4.23333px"
    id="tspan1785">spatial adjacency</tspan></tspan><tspan
          sodipodi:role="line"
          style="stroke-width:0.264583"
-         x="134.38336"
-         y="30.246107"
+         x="119.03761"
+         y="29.716942"
          id="tspan1781">a<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan1793">t,s</tspan>= <tspan
+   id="tspan1793">(t1,t2),(s1,s2) </tspan>= <tspan
    style="font-size:4.23333px"
    id="tspan1787">spatio-temporal adjacency</tspan></tspan></text>
     <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1"
-       d="m 121.94523,21.67597 8.86371,-0.104739"
+       d="m 106.5993,21.146803 8.86371,-0.104739"
        id="path1824"
        inkscape:connector-type="polyline"
        inkscape:connector-curvature="0" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#b70418;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:4, 2;stroke-dashoffset:0;stroke-opacity:1"
-       d="m 121.94523,28.395916 8.86371,-0.104739"
+       d="m 106.5993,27.866749 8.86371,-0.104739"
        id="path1824-3"
        inkscape:connector-type="polyline"
        inkscape:connector-curvature="0" />
     <path
        style="fill:none;fill-rule:evenodd;stroke:#2d20bc;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:3, 1;stroke-dashoffset:0;stroke-opacity:1"
-       d="m 121.94572,15.245865 8.86371,-0.104739"
+       d="m 106.59979,14.716698 8.86371,-0.104739"
        id="path1824-3-6"
        inkscape:connector-type="polyline"
        inkscape:connector-curvature="0" />
@@ -433,8 +433,8 @@
     <ellipse
        style="fill:#808000;fill-opacity:0;stroke:#000000;stroke-width:0.402235;stroke-opacity:1"
        id="path111-2-9-8"
-       cx="126.22181"
-       cy="8.6262579"
+       cx="110.87601"
+       cy="8.0970917"
        rx="1.4097908"
        ry="1.5549546" />
     <text
