@@ -27,9 +27,9 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="0.61580177"
-     inkscape:cx="20.29874"
-     inkscape:cy="614.64585"
+     inkscape:zoom="1.2432572"
+     inkscape:cx="314.89864"
+     inkscape:cy="246.52984"
      inkscape:window-width="1965"
      inkscape:window-height="976"
      inkscape:window-x="3096"
@@ -331,7 +331,7 @@
          x="66.400032"
          y="79.049728">a<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan1588-2">st</tspan></tspan></text>
+   id="tspan1588-2">t,s</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-size:5.29167px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
@@ -366,9 +366,15 @@
          id="tspan1775"
          style="font-size:4.63021px;stroke-width:0.264583"
          x="134.38336"
-         y="10.402346">     <tspan
+         y="10.402346"><tspan
    style="font-size:5.29167px"
-   id="tspan2573">=</tspan> point in space-time</tspan><tspan
+   id="tspan459">n</tspan><tspan
+   style="font-size:65%;baseline-shift:sub"
+   id="tspan456">t,s </tspan><tspan
+   style="font-size:5.29167px"
+   id="tspan2573">=</tspan> <tspan
+   style="font-size:4.23333px"
+   id="tspan457">node in space-time</tspan></tspan><tspan
          sodipodi:role="line"
          style="stroke-width:0.264583"
          x="134.38336"
@@ -393,7 +399,7 @@
          y="30.246107"
          id="tspan1781">a<tspan
    style="font-size:65%;baseline-shift:sub"
-   id="tspan1793">st</tspan> = <tspan
+   id="tspan1793">t,s</tspan>= <tspan
    style="font-size:4.23333px"
    id="tspan1787">spatio-temporal adjacency</tspan></tspan></text>
     <path
@@ -431,5 +437,47 @@
        cy="8.6262579"
        rx="1.4097908"
        ry="1.5549546" />
+    <text
+       xml:space="preserve"
+       style="font-size:3.30368px;line-height:1.25;font-family:sans-serif;stroke-width:0.165184"
+       x="35.786682"
+       y="60.186928"
+       id="text275-8-5-3"
+       transform="scale(0.99124709,1.0088302)"><tspan
+         sodipodi:role="line"
+         id="tspan273-7-9-6"
+         style="stroke-width:0.165184"
+         x="35.786682"
+         y="60.186928">n<tspan
+   style="font-size:2.14739px;baseline-shift:sub;stroke-width:0.165184"
+   id="tspan1588-2-7">2,5</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.30368px;line-height:1.25;font-family:sans-serif;stroke-width:0.165184"
+       x="89.906448"
+       y="60.62587"
+       id="text275-8-5-3-5"
+       transform="scale(0.99124709,1.0088302)"><tspan
+         sodipodi:role="line"
+         id="tspan273-7-9-6-3"
+         style="stroke-width:0.165184"
+         x="89.906448"
+         y="60.62587">n<tspan
+   style="font-size:2.14739px;baseline-shift:sub;stroke-width:0.165184"
+   id="tspan1588-2-7-5">2,1</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:3.30368px;line-height:1.25;font-family:sans-serif;stroke-width:0.165184"
+       x="89.763931"
+       y="101.09784"
+       id="text275-8-5-3-5-6"
+       transform="scale(0.99124709,1.0088302)"><tspan
+         sodipodi:role="line"
+         id="tspan273-7-9-6-3-2"
+         style="stroke-width:0.165184"
+         x="89.763931"
+         y="101.09784">n<tspan
+   style="font-size:2.14739px;baseline-shift:sub;stroke-width:0.165184"
+   id="tspan1588-2-7-5-9">1,1</tspan></tspan></text>
   </g>
 </svg>
