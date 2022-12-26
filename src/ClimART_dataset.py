@@ -12,6 +12,7 @@ class ClimARTDataset(Dataset):
     """
 
     def __init__(self, dataset_path: str | Path = "/TasksEnergyTransition/ClimART/", split: str = "training"):
+        print("============================================================")
         print(f"Loading ClimART dataset on {split} split:")
         self.NUM_COLUMNS = 1268
         self.NUM_INPUTS = 970
@@ -37,8 +38,19 @@ class ClimARTDataset(Dataset):
         Y_frame = frame.iloc[:, self.NUM_INPUTS:self.NUM_COLUMNS]
         X = X_frame.to_numpy()
         Y = Y_frame.to_numpy()
-        self.data = (torch.from_numpy(X), torch.from_numpy(Y))
+        # TODO: some labels are 9 * 10^36, how do we manage them? For now setting them to 0...
+        # could also remove entirely the columns
+        Y[Y > 1e30] = 0
+        self.data = (torch.from_numpy(X).float(), torch.from_numpy(Y).float())
+        self.input_dim = X.shape[1]
+        self.label_dim = Y.shape[1]
         print(f"Loaded ClimART {split} split!")
+        print("============================================================")
+        # just to be sure we don't have the same problem in the future ;D
+        assert torch.count_nonzero(self.data[0] > 1e30) == 0, "Error: Values > 1e30 in X!"
+        assert torch.count_nonzero(self.data[0] < -1e30) == 0, "Error: Values < -1e30 in X!"
+        assert torch.count_nonzero(self.data[1] > 1e30) == 0, "Error: Values > 1e30 in y!"
+        assert torch.count_nonzero(self.data[1] < -1e30) == 0, "Error: Values < -1e30 in y!"
 
 
     def __len__(self):
@@ -52,6 +64,8 @@ if __name__ == "__main__":
     import time
     t = time.time()
     train_dataset = ClimARTDataset()
+    val_dataset = ClimARTDataset(split="validation")
+    test_dataset = ClimARTDataset(split="testing")
     from torch.utils.data import DataLoader
     train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
     print("Shape of the data with batch size = 64:")
