@@ -6,22 +6,13 @@ import time
 
 SEED = 42
 
-# load data
-climart_train = ClimARTDataset(split="training")
-climart_val = ClimARTDataset(split="validation")
-climart_test = ClimARTDataset(split="testing")
-input_dim = climart_train.data[0].shape[1]
-label_dim = climart_train.data[1].shape[1]
-
-train_data = climart_train.data
-print("Number of training samples:", len(train_data[0]))
 #####################################
 #           Random Forests          #
 #####################################
 def RFRegressor(train_data, test_data):
     print("Fitting a RF regressor:")
     t = time.time()
-    RFRegressor = RandomForestRegressor(random_state=SEED)
+    RFRegressor = RandomForestRegressor(n_estimators=128, random_state=SEED, n_jobs=256)
     RFRegressor.fit(*train_data)
     print(time.time() - t, "seconds elapsed!")
     score = RFRegressor.score(*test_data)
@@ -58,7 +49,6 @@ import pytorch_lightning as pl
 import torch.nn.functional as F
 from torchmetrics import R2Score
 device = torch.device("cuda")
-r2score  = R2Score(num_outputs=label_dim).to(device)
 
 class MLP(pl.LightningModule):
     def __init__(self, input_size, hidden_size, output_size):
@@ -69,8 +59,10 @@ class MLP(pl.LightningModule):
         self.hidden = nn.Linear(hidden_size, hidden_size)
         self.output_layer = nn.Linear(hidden_size, output_size)
         self.relu = nn.ReLU()
+        self.r2score  = R2Score(num_outputs=output_size).to(device)
 
     def forward(self, x):
+        x = self.layer_norm(x)
         x = self.relu(self.input_layer(x))
         x = self.relu(self.hidden(x))
         x = self.output_layer(x)
@@ -94,7 +86,7 @@ class MLP(pl.LightningModule):
         x, y = x.float(), y.float()
         out = self(x)
         loss =  F.mse_loss(out, y)
-        r2 = r2score(out, y)
+        r2 = self.r2score(out, y)
         self.log('test_loss', loss, on_epoch=True)
         self.log('r2_score', r2, on_epoch=True)
         return loss
@@ -106,10 +98,10 @@ class MLP(pl.LightningModule):
         optimizer = Adam(self.parameters(), lr=1e-3)
         return optimizer
 
-def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, label_dim):
-    train_loader = DataLoader(train_dataset, batch_size=64, num_workers=64, shuffle=True)
-    validation_loader = DataLoader(validation_dataset, batch_size=64, num_workers=64, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=64, num_workers=64, shuffle=False)
+def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, label_dim, batch_size=64):
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=64, shuffle=True)
+    validation_loader = DataLoader(validation_dataset, batch_size=batch_size, num_workers=64, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=64, shuffle=False)
     mlp = MLP(input_dim, 2048, label_dim)
     # mlp = MLP.load_from_checkpoint("lightning_logs/version_10/checkpoints/epoch=9-step=1410.ckpt", input_size=50, hidden_size=128, output_size=1)
     trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=30, log_every_n_steps=10)
@@ -117,12 +109,34 @@ def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, lab
     # trainer.test(mlp, validation_loader)
     return trainer.test(mlp, test_loader)
 
-climart_scores = {}
-climart_scores["RF"] = RFRegressor(climart_train.data, climart_test.data)
-climart_scores["GB"] = GradBoostRegressor(climart_train.data, climart_test.data)
-climart_scores["MLP"] = MLPRegressor(climart_train, climart_val, climart_test, climart_train.input_dim, climart_train.label_dim)
+datasets = [ClimARTDataset, UberMovementDataset]
+
+scores = {}
+for dataset in datasets:
+    batch_size = 64
+    train_dataset = dataset(split="training")
+    val_dataset = dataset(split="validation")
 
 
-print(climart_scores)
+    scores[dataset.__name__] = {}
+    if dataset == UberMovementDataset:
+        batch_size = 4096
+        test_dataset = val_dataset
+    else:
+        test_dataset = dataset(split="testing")
+
+    scores[dataset.__name__]["RF"] = RFRegressor(train_dataset.data, test_dataset.data)
+    scores[dataset.__name__]["GB"] = GradBoostRegressor(train_dataset.data, test_dataset.data)
+    scores[dataset.__name__]["MLP"] = MLPRegressor(train_dataset, val_dataset, test_dataset, train_dataset.input_dim, train_dataset.label_dim, batch_size)
+
+
+print(scores)
 with open("results_baselines.txt", "w") as f:
-    f.write(str(climart_scores))
+    f.write(str(scores))
+
+# CLIMART:
+# {'RF': 0.8670452416481914, 'GB': 0.9635100152090146, 'MLP': [{'test_loss': 28312.16015625, 'r2_score': -122365976576.0}]}
+# {'ClimARTDataset': {'MLP': [{'test_loss': 21988.9375, 'r2_score': -3057724.0}]}}
+# UberMovement:
+# {'UberMovementDataset': {'MLP': [{'test_loss': 10136.76171875, 'r2_score': 0.5676587224006653}]}}
+# {'UberMovementDataset': {'RF': 0.5863605102531544}}
