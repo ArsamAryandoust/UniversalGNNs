@@ -9,5 +9,7 @@ RUN apt-get install python3-pip -y
 RUN pip3 install torch torchvision torchaudio
 RUN pip3 install pandas
 RUN pip3 install tqdm
+RUN pip3 install scikit-learn
+RUN pip3 install pytorch-lightning
 
 WORKDIR /UniversalGNNs
