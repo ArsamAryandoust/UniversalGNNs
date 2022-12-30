@@ -11,7 +11,11 @@ class ClimARTDataset(CheckedDataset):
     Loads the appropriate split of the ClimART dataset into main memory and converts data to pytorch tensors
     """
 
-    def __init__(self, dataset_path: str | Path = "/TasksEnergyTransition/ClimART/", split: str = "training", normalize=False):
+    def __init__(self,
+                 dataset_path: str | Path = "/TasksEnergyTransition/ClimART/",
+                 split: str = "training",
+                 normalize=False,
+                 sanitize=True):
         print("============================================================")
         print(f"Loading ClimART dataset on {split} split:")
         self.normalize = normalize
@@ -21,7 +25,8 @@ class ClimARTDataset(CheckedDataset):
         self.split = split
         possible_splits = ["training", "validation", "testing"]
         if split not in possible_splits:
-            raise ValueError("Split must be one of " + ", ".join(possible_splits) + "!")
+            raise ValueError("Split must be one of " +
+                             ", ".join(possible_splits) + "!")
 
         main_data_frame = pd.DataFrame()
         data_path = Path(dataset_path) / split
@@ -32,19 +37,21 @@ class ClimARTDataset(CheckedDataset):
             frame = pd.read_csv(file)
             if len(frame.columns) != self.NUM_COLUMNS:
                 raise RuntimeError(f"""The number of columns in the csv file 
-                    is different from the expected: expected {self.NUM_COLUMNS}, got {len(frame.columns)}.""")
+                    is different from the expected: expected {self.NUM_COLUMNS}, got {len(frame.columns)}."""
+                                   )
             main_data_frame = pd.concat([main_data_frame, frame])
-        
+
         X_frame = frame.iloc[:, :self.NUM_INPUTS]
         Y_frame = frame.iloc[:, self.NUM_INPUTS:self.NUM_COLUMNS]
         X = X_frame.to_numpy()
         Y = Y_frame.to_numpy()
-        
+
         self.data = (torch.from_numpy(X).float(), torch.from_numpy(Y).float())
         self.input_dim = X.shape[1]
         self.label_dim = Y.shape[1]
 
-        self._remove_bad_features_labels()
+        if sanitize:
+            self._sanitize()
         if self.normalize:
             self._normalize_data()
         self._set_input_label_dim()
@@ -53,13 +60,13 @@ class ClimARTDataset(CheckedDataset):
         print(f"Loaded ClimART {split} split!")
         print("============================================================")
 
-
     def __len__(self):
         return len(self.data[0])
 
     def __getitem__(self, idx):
         x, y = self.data[0][idx], self.data[1][idx]
         return x, y
+
 
 if __name__ == "__main__":
     import time

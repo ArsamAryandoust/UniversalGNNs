@@ -26,7 +26,7 @@ class CheckedDataset(ABC, Dataset):
             print("Removed", int(num_removed), message)
         return tensor
 
-    def _remove_bad_features_labels(self):
+    def _sanitize(self):
         """
         scans the data and removes bad input and label dimensions, where there are:
          - nan
@@ -58,21 +58,32 @@ class CheckedDataset(ABC, Dataset):
 
         self.data = X, Y
 
-    def _normalize_data(self):
+    def _get_normalization_values(self, data) -> tuple[torch.Tensor, torch.Tensor]:
         """
-        Normalize the input data over features across all samples and check that the mean/std are not nan
+        Calculate mean and std for normalization and check for nans or std==0.
         """
-        X, Y = self.data
-        mean = X.mean(dim=0)
-        std = X.std(dim=0)
+        mean = data.mean(dim=0)
+        std = data.std(dim=0)
+
         mean_nan = torch.count_nonzero(torch.isnan(mean))
         std_nan = torch.count_nonzero(torch.isnan(std))
         std_zero = torch.count_nonzero(std == 0)
         assert mean_nan == 0,   "Error: nan values in X mean when trying to normalize!"
         assert std_nan == 0,    "Error: nan values in X std when trying to normalize!"
         assert std_zero == 0,   "Error: 0 values in X std when trying to normalize!"
+
+        return mean, std
+
+    def _normalize_data(self) -> tuple[torch.Tensor, torch.Tensor]:
+        """
+        Normalize the input data over features across all samples and check that the mean/std are not nan
+        """
+        X, Y = self.data
+
+        mean, std = self._get_normalization_values(X)
         X = (X - mean) / std
         self.data = X, Y
+        return mean, std
 
     def _sanity_check_data(self):
         """

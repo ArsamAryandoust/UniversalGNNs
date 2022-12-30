@@ -20,7 +20,8 @@ class UberMovementDataset(CheckedDataset):
                  split: str = "training",
                  use_region_centroids: bool = True,
                  load_data=True,
-                 normalize=False):
+                 normalize=False,
+                 sanitize=True):
         # The columns in the dataset files are:
         ### INPUTS:
         # 1) city_id
@@ -56,7 +57,8 @@ class UberMovementDataset(CheckedDataset):
             print("Saving data for future loads...")
             self.save_data(self.save_file)
         
-        self._remove_bad_features_labels()
+        if sanitize:
+            self._sanitize()
         if self.normalize:
             self._normalize_data()
         self._set_input_label_dim()
