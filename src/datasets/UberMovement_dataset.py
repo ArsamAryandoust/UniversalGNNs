@@ -1,13 +1,12 @@
 import torch
 import numpy as np
-from torch.utils.data import Dataset
+from datasets.checked_dataset import CheckedDataset
 from pathlib import Path
 import pandas as pd
-import itertools
 from tqdm import tqdm
 
 
-class UberMovementDataset(Dataset):
+class UberMovementDataset(CheckedDataset):
     """
     Loads the appropriate split of the UberMovement dataset into main memory and converts data to pytorch tensors.
 
@@ -20,7 +19,8 @@ class UberMovementDataset(Dataset):
                  | Path = "/TasksEnergyTransition/UberMovement/",
                  split: str = "training",
                  use_region_centroids: bool = True,
-                 load_data=True):
+                 load_data=True,
+                 normalize=False):
         # The columns in the dataset files are:
         ### INPUTS:
         # 1) city_id
@@ -37,6 +37,7 @@ class UberMovementDataset(Dataset):
         # 11) geometric_standard_deviation_travel_time
         print("============================================================")
         print(f"Loading UberMovement dataset on {split} split:")
+        self.normalize = normalize
         self.NUM_ORIGINAL_COLUMNS = 11  # original columns
         self.NUM_LABELS = 4
         self.dataset_path = Path(dataset_path)
@@ -55,7 +56,12 @@ class UberMovementDataset(Dataset):
             print("Saving data for future loads...")
             self.save_data(self.save_file)
         
+        self._remove_bad_features_labels()
+        if self.normalize:
+            self._normalize_data()
         self._set_input_label_dim()
+        self._sanity_check_data()
+
         print(f"Loaded UberMovement {self.split} split!")
         print("============================================================")
 
@@ -66,10 +72,6 @@ class UberMovementDataset(Dataset):
     def __getitem__(self, idx):
         x, y = self.data[0][idx], self.data[1][idx]
         return x, y
-
-    def _set_input_label_dim(self):
-        self.input_dim = self.data[0].shape[1]
-        self.label_dim = self.data[1].shape[1]
 
     def _process_data(self, use_region_centroids):
         """
@@ -226,7 +228,8 @@ class UberMovementDataset(Dataset):
         print(f"Saved {self.split} data in {str(save_file)}!")
 
     def load_data(self, save_file: str | Path):
-        self.data = torch.load(save_file)
+        data = torch.load(save_file)
+        self.data = data[0].float(), data[1].float()
         print(f"Loaded {self.split} data from {str(save_file)}!")
 
 

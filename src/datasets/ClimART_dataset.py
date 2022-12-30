@@ -1,19 +1,20 @@
 import torch
 import numpy as np
-from torch.utils.data import Dataset
+from datasets.checked_dataset import CheckedDataset
 from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
 
-class ClimARTDataset(Dataset):
+class ClimARTDataset(CheckedDataset):
     """
     Loads the appropriate split of the ClimART dataset into main memory and converts data to pytorch tensors
     """
 
-    def __init__(self, dataset_path: str | Path = "/TasksEnergyTransition/ClimART/", split: str = "training"):
+    def __init__(self, dataset_path: str | Path = "/TasksEnergyTransition/ClimART/", split: str = "training", normalize=False):
         print("============================================================")
         print(f"Loading ClimART dataset on {split} split:")
+        self.normalize = normalize
         self.NUM_COLUMNS = 1268
         self.NUM_INPUTS = 970
         self.dataset_path = dataset_path
@@ -38,19 +39,19 @@ class ClimARTDataset(Dataset):
         Y_frame = frame.iloc[:, self.NUM_INPUTS:self.NUM_COLUMNS]
         X = X_frame.to_numpy()
         Y = Y_frame.to_numpy()
-        # TODO: some labels are 9 * 10^36, how do we manage them? For now setting them to 0...
-        # could also remove entirely the columns
-        Y[Y > 1e30] = 0
+        
         self.data = (torch.from_numpy(X).float(), torch.from_numpy(Y).float())
         self.input_dim = X.shape[1]
         self.label_dim = Y.shape[1]
+
+        self._remove_bad_features_labels()
+        if self.normalize:
+            self._normalize_data()
+        self._set_input_label_dim()
+        self._sanity_check_data()
+
         print(f"Loaded ClimART {split} split!")
         print("============================================================")
-        # just to be sure we don't have the same problem in the future ;D
-        assert torch.count_nonzero(self.data[0] > 1e30) == 0, "Error: Values > 1e30 in X!"
-        assert torch.count_nonzero(self.data[0] < -1e30) == 0, "Error: Values < -1e30 in X!"
-        assert torch.count_nonzero(self.data[1] > 1e30) == 0, "Error: Values > 1e30 in y!"
-        assert torch.count_nonzero(self.data[1] < -1e30) == 0, "Error: Values < -1e30 in y!"
 
 
     def __len__(self):
@@ -63,7 +64,7 @@ class ClimARTDataset(Dataset):
 if __name__ == "__main__":
     import time
     t = time.time()
-    train_dataset = ClimARTDataset()
+    train_dataset = ClimARTDataset(normalize=True)
     val_dataset = ClimARTDataset(split="validation")
     test_dataset = ClimARTDataset(split="testing")
     from torch.utils.data import DataLoader

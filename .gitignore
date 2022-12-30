@@ -1,4 +1,6 @@
 data
 
 src/.ipynb_checkpoints
-src/__pycache__
+__pycache__
+lightning_logs/
+logs/
