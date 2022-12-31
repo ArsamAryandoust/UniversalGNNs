@@ -16,7 +16,7 @@ class MultiSplitDataset(CheckedDataset):
     
     Can pass any named argument to the underlying dataset class via kwargs.
     """
-    def __init__(self, dataset_class, train=True, val=True, test=True, normalize=True, sanitize=True, **kwargs):
+    def __init__(self, dataset_class, train=True, val=True, test=True, normalize_full=True, sanitize_full=True, **kwargs):
         super().__init__()
         self.dataset_class = dataset_class
         self.train = train
@@ -37,10 +37,10 @@ class MultiSplitDataset(CheckedDataset):
         Y = torch.vstack([d.data[1] for d in self.datasets.values()])
         self.data = X, Y
 
-        if sanitize:
+        if sanitize_full:
             self._sanitize()
 
-        if normalize:
+        if normalize_full:
             if not train:
                 raise ValueError("Impossible to normalize a multi-split dataset without train split!")
             full_data = self.data

@@ -106,7 +106,6 @@ class UberMovementDataset(CheckedDataset):
         if use_region_centroids:
             # compute centroid and std dev for each zone (for each city)
             # instead of the source and destination ID we hace the xyz coord of the centroid and stddev
-            self.NUM_COLUMNS = self.NUM_ORIGINAL_COLUMNS - 2 + 6 + 6
             city_zones_centroids_std = {}
             print("Calculating zone centroids...")
             for id in city2id.values():
@@ -137,6 +136,7 @@ class UberMovementDataset(CheckedDataset):
         main_data_frame = main_data_frame[cols]
 
         # build the final X, Y
+        self.NUM_COLUMNS = len(main_data_frame.columns)
         self.NUM_INPUTS = self.NUM_COLUMNS - self.NUM_LABELS
         X_frame = main_data_frame.iloc[:, :self.NUM_INPUTS]
         Y_frame = main_data_frame.iloc[:, self.NUM_INPUTS:self.NUM_COLUMNS]
@@ -203,10 +203,10 @@ class UberMovementDataset(CheckedDataset):
                      total=len(city_ids))):
             # TODO: maybe find a more elegant way to do this?
             # temp fix for "London" that starts with zone 0 when all the others start with one
-            print("cid:", cid)
-            print("sid:", sid)
-            print("did:", did)
-            print("centroids shape:", city_zones_centroids_std[cid].shape)
+            # print("cid:", cid)
+            # print("sid:", sid)
+            # print("did:", did)
+            # print("centroids shape:", city_zones_centroids_std[cid].shape)
             if cid != 7:
                 sid -= 1
                 did -= 1
