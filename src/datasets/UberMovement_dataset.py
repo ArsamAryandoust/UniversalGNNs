@@ -1,13 +1,12 @@
 import torch
 import numpy as np
-from torch.utils.data import Dataset
+from datasets.checked_dataset import CheckedDataset
 from pathlib import Path
 import pandas as pd
-import itertools
 from tqdm import tqdm
 
 
-class UberMovementDataset(Dataset):
+class UberMovementDataset(CheckedDataset):
     """
     Loads the appropriate split of the UberMovement dataset into main memory and converts data to pytorch tensors.
 
@@ -20,7 +19,9 @@ class UberMovementDataset(Dataset):
                  | Path = "/TasksEnergyTransition/UberMovement/",
                  split: str = "training",
                  use_region_centroids: bool = True,
-                 load_data=True):
+                 load_data=True,
+                 normalize=False,
+                 sanitize=True):
         # The columns in the dataset files are:
         ### INPUTS:
         # 1) city_id
@@ -37,6 +38,7 @@ class UberMovementDataset(Dataset):
         # 11) geometric_standard_deviation_travel_time
         print("============================================================")
         print(f"Loading UberMovement dataset on {split} split:")
+        self.normalize = normalize
         self.NUM_ORIGINAL_COLUMNS = 11  # original columns
         self.NUM_LABELS = 4
         self.dataset_path = Path(dataset_path)
@@ -55,7 +57,13 @@ class UberMovementDataset(Dataset):
             print("Saving data for future loads...")
             self.save_data(self.save_file)
         
+        if sanitize:
+            self._sanitize()
+        if self.normalize:
+            self._normalize_data()
         self._set_input_label_dim()
+        self._sanity_check_data()
+
         print(f"Loaded UberMovement {self.split} split!")
         print("============================================================")
 
@@ -66,10 +74,6 @@ class UberMovementDataset(Dataset):
     def __getitem__(self, idx):
         x, y = self.data[0][idx], self.data[1][idx]
         return x, y
-
-    def _set_input_label_dim(self):
-        self.input_dim = self.data[0].shape[1]
-        self.label_dim = self.data[1].shape[1]
 
     def _process_data(self, use_region_centroids):
         """
@@ -102,7 +106,6 @@ class UberMovementDataset(Dataset):
         if use_region_centroids:
             # compute centroid and std dev for each zone (for each city)
             # instead of the source and destination ID we hace the xyz coord of the centroid and stddev
-            self.NUM_COLUMNS = self.NUM_ORIGINAL_COLUMNS - 2 + 6 + 6
             city_zones_centroids_std = {}
             print("Calculating zone centroids...")
             for id in city2id.values():
@@ -133,6 +136,7 @@ class UberMovementDataset(Dataset):
         main_data_frame = main_data_frame[cols]
 
         # build the final X, Y
+        self.NUM_COLUMNS = len(main_data_frame.columns)
         self.NUM_INPUTS = self.NUM_COLUMNS - self.NUM_LABELS
         X_frame = main_data_frame.iloc[:, :self.NUM_INPUTS]
         Y_frame = main_data_frame.iloc[:, self.NUM_INPUTS:self.NUM_COLUMNS]
@@ -199,10 +203,10 @@ class UberMovementDataset(Dataset):
                      total=len(city_ids))):
             # TODO: maybe find a more elegant way to do this?
             # temp fix for "London" that starts with zone 0 when all the others start with one
-            print("cid:", cid)
-            print("sid:", sid)
-            print("did:", did)
-            print("centroids shape:", city_zones_centroids_std[cid].shape)
+            # print("cid:", cid)
+            # print("sid:", sid)
+            # print("did:", did)
+            # print("centroids shape:", city_zones_centroids_std[cid].shape)
             if cid != 7:
                 sid -= 1
                 did -= 1
@@ -226,7 +230,8 @@ class UberMovementDataset(Dataset):
         print(f"Saved {self.split} data in {str(save_file)}!")
 
     def load_data(self, save_file: str | Path):
-        self.data = torch.load(save_file)
+        data = torch.load(save_file)
+        self.data = data[0].float(), data[1].float()
         print(f"Loaded {self.split} data from {str(save_file)}!")
 
 

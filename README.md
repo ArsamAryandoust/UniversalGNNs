@@ -1,4 +1,4 @@
-# Universal graph neural networks for multi-task transfer learning
+# Universal graph neural networks for multi-task learning
 
 We seek a universal graph representation of data that is able to capture arbitrary
 events described by arbitary data types. Our goal is to develop a universal deep 
