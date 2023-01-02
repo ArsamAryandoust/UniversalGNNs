@@ -1,7 +1,6 @@
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.multioutput import RegressorChain
-from ClimART_dataset import ClimARTDataset
-from UberMovement_dataset import UberMovementDataset
+from datasets import ClimARTDataset, UberMovementDataset
 import time
 
 SEED = 42
