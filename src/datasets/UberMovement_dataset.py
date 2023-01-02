@@ -19,6 +19,7 @@ class UberMovementDataset(CheckedDataset):
                  | Path = "/TasksEnergyTransition/UberMovement/",
                  split: str = "training",
                  use_region_centroids: bool = True,
+                 use_normalized_coordinates: bool = True,
                  load_data=True,
                  normalize=False,
                  sanitize=True):
@@ -44,6 +45,9 @@ class UberMovementDataset(CheckedDataset):
         self.dataset_path = Path(dataset_path)
         self.split = split
         self.save_file = self.dataset_path / f"processed/{split}.pt"
+        if use_normalized_coordinates:
+            self.save_file = self.save_file.parent / f"{split}_normalized_coordinates.pt"
+
         possible_splits = ["training", "validation", "testing"]
         if split not in possible_splits:
             raise ValueError("Split must be one of " +
@@ -53,10 +57,10 @@ class UberMovementDataset(CheckedDataset):
             print("Detected save file, trying to load it...")
             self.load_data(self.save_file)
         else:
-            self._process_data(use_region_centroids)
+            self._process_data(use_region_centroids, use_normalized_coordinates)
             print("Saving data for future loads...")
             self.save_data(self.save_file)
-        
+
         if sanitize:
             self._sanitize()
         if self.normalize:
@@ -67,7 +71,6 @@ class UberMovementDataset(CheckedDataset):
         print(f"Loaded UberMovement {self.split} split!")
         print("============================================================")
 
-
     def __len__(self):
         return len(self.data[0])
 
@@ -75,7 +78,7 @@ class UberMovementDataset(CheckedDataset):
         x, y = self.data[0][idx], self.data[1][idx]
         return x, y
 
-    def _process_data(self, use_region_centroids):
+    def _process_data(self, use_region_centroids: bool, use_normalized_coordinates: bool):
         """
         Loads the city-id and zones information, together with the main data csv, then it
         calculates the spatial features and sets the right ones for each sample in the dataset.
@@ -109,8 +112,14 @@ class UberMovementDataset(CheckedDataset):
             city_zones_centroids_std = {}
             print("Calculating zone centroids...")
             for id in city2id.values():
-                city_zones_centroids_std[id] = self._calculate_city_centroids(
+                centroids_stds = self._calculate_city_centroids(
                     city_zones_df, id)
+                if use_normalized_coordinates:
+                    city_zones_centroids_std[
+                        id] = self._normalize_centroids_location(
+                            centroids_stds)
+                else:
+                    city_zones_centroids_std[id] = centroids_stds
 
             # build a df with the new data
             print("Building spatial data with centroids...")
@@ -186,18 +195,52 @@ class UberMovementDataset(CheckedDataset):
             stds.append(cord.std(axis=1))
         return np.array([centroids, stds])
 
+    def _normalize_centroids_location(
+            self, city_centroids_stds: np.ndarray) -> np.ndarray:
+        """
+        Takes as input the city centroids calculated with self._calculate_city_centroids() and normalizes the coordinates
+        of the centroids with mean=0, std=1. Also adds the city mean coordinate to the returned array.
+
+        output: np.ndarray of shape [3, num_zones, 3] where:
+         - output[0, :, :] corresponds to the city center coordinate in the previous frame of reference. It is the same for each zone. 
+         - output[1, :, :] corresponds to the normalized city centroids coordinates.
+         - output[2, :, :] corresponds to the unmodified stds of the city zones.
+        """
+        centroids, stds = city_centroids_stds[0], city_centroids_stds[1]
+        num_zones, coord_dims = centroids.shape
+        print("num_zones:", num_zones)
+        print("coord_dims:", coord_dims)
+        city_center = centroids.mean(axis=0)
+        centroids_std = centroids.std(axis=0)
+        centroids = (centroids - city_center) / centroids_std
+        city_center_broadcasted = np.broadcast_to(city_center,
+                                                  (num_zones, coord_dims))
+        ret = np.array([city_center_broadcasted, centroids, stds])
+        print("city center:", city_center)
+        print("new mean:", centroids.mean())
+        print("new std:", centroids.std())
+        print("ret shape:", ret.shape)
+        return ret
+
     def _build_centroid_spatial_data(
             self, data_frame: pd.DataFrame,
-            city_zones_centroids_std: np.ndarray) -> pd.DataFrame:
+            city_zones_centroids_std: dict[np.ndarray]) -> pd.DataFrame:
         """
-        Builds a spatial DataFrame of size [num_samples, 12] that contains the spatial data given by the zone centroids and stds
+        Builds a spatial DataFrame of size [num_samples, 12] or [num_samples, 18] that contains the spatial data given by the zone centroids and stds
         in the same order as data_frame (row i of the output corresponds to row i of data_frame).
+
+        The DataFrame will have 12 columns if the input ndarray only contains centroids and stds, 18 columns
+        if the input zones coordinates also contains the city center coordinates given by self._normalize_centroids_location().
         """
         city_ids = data_frame["city_id"].to_numpy()
         source_ids = data_frame["source_id"].to_numpy()
         destination_ids = data_frame["destination_id"].to_numpy()
-        source_data = np.zeros((len(city_ids), 6))
-        dest_data = np.zeros((len(city_ids), 6))
+
+        spatial_dims = city_zones_centroids_std[0].shape[
+            0] * city_zones_centroids_std[0].shape[2]
+        source_data = np.zeros((len(city_ids), spatial_dims))
+        dest_data = np.zeros((len(city_ids), spatial_dims))
+
         for i, (cid, sid, did) in enumerate(
                 tqdm(zip(city_ids, source_ids, destination_ids),
                      total=len(city_ids))):
@@ -216,12 +259,22 @@ class UberMovementDataset(CheckedDataset):
             dest_data[i] = city_zones_centroids_std[cid][:, did, :].flatten()
         data = np.hstack([source_data, dest_data])
         print("spatial data shape:", data.shape)
-        return pd.DataFrame(data,
-                            columns=[
-                                "s_x_mean", "s_y_mean", "s_z_mean", "s_x_std",
-                                "s_y_std", "s_z_std", "d_x_mean", "d_y_mean",
-                                "d_z_mean", "d_x_std", "d_y_std", "d_z_std"
-                            ])
+        if spatial_dims == 6:
+            columns = [
+                "s_x_mean", "s_y_mean", "s_z_mean", "s_x_std", "s_y_std",
+                "s_z_std", "d_x_mean", "d_y_mean", "d_z_mean", "d_x_std",
+                "d_y_std", "d_z_std"
+            ]
+        if spatial_dims == 9:
+            columns = [
+                "s_city_center_x", "s_city_center_y", "s_city_center_z", 
+                "s_x_mean", "s_y_mean", "s_z_mean", "s_x_std", "s_y_std", 
+                "s_z_std",
+                "d_city_center_x", "d_city_center_y", "d_city_center_z",
+                "d_x_mean", "d_y_mean", "d_z_mean", "d_x_std", "d_y_std",
+                "d_z_std"
+            ]
+        return pd.DataFrame(data, columns=columns)
 
     def save_data(self, save_file: str | Path):
         save_file = Path(save_file)
@@ -238,15 +291,16 @@ class UberMovementDataset(CheckedDataset):
 if __name__ == "__main__":
     import time
     t = time.time()
-    train_dataset = UberMovementDataset()
-    train_dataset = UberMovementDataset(split="validation")
-    train_dataset = UberMovementDataset(split="testing")
+    train_dataset = UberMovementDataset(split="training", normalize=True)
     from torch.utils.data import DataLoader
     train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True)
     print("Shape of the data with batch size = 64:")
     for data in train_dataloader:
         x, y = data
         print("x shape:", x.shape)
+        print("x[0]:", x[0])
         print("y shape:", y.shape)
         break
     print(f"Time elapsed: {time.time() - t} seconds.")
+
+    # torch.save(train_dataset.data[0][:64].clone(), "./uber_batch.pt")

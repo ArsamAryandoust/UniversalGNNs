@@ -43,7 +43,6 @@ class MultiSplitDataset(CheckedDataset):
         if normalize_full:
             if not train:
                 raise ValueError("Impossible to normalize a multi-split dataset without train split!")
-            full_data = self.data
             train_start, train_end = self.samples_range["training"][0], self.samples_range["training"][1]
             mean, std = self._get_normalization_values(self.data[0][train_start: train_end])
             X = (self.data[0] - mean) / std
