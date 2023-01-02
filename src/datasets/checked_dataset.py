@@ -1,11 +1,16 @@
 import torch
 from torch.utils.data import Dataset
 from abc import ABC, abstractmethod
+from GraphBuilder import GraphBuilder
+import torch.nn as nn
 
 class CheckedDataset(ABC, Dataset):
     def __init__(self):
         super().__init__()
         self.data = None
+        # attributes necessary to the UniversalGNN
+        self.graph_builder : GraphBuilder = None
+        self.regressor : nn.Module = None
 
     @abstractmethod
     def __len__(self, idx):

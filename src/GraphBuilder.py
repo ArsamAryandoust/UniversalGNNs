@@ -14,7 +14,7 @@ class GraphBuilder:
         self.device = device
     
     def compute_nodes_matrix(self, batch):
-        return self.encoder.forward_det(batch)
+        return self.encoder.get_latent(batch)
 
 
     def compute_edges_matrices(self, batch):
