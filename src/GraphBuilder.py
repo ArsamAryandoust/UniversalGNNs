@@ -16,10 +16,9 @@ class GraphBuilder:
     def compute_nodes_matrix(self, batch):
         return self.encoder.get_latent(batch)
 
-
     def compute_edges_matrices(self, batch):
-        params_indeces = torch.IntTensor(self.params_indeces)
-        distance_features = torch.index_select(batch, dim=1, index=params_indeces)
+        distance_features_indeces = torch.IntTensor(self.params_indeces)
+        distance_features = torch.index_select(batch, dim=1, index=distance_features_indeces)
         distance_features = distance_features.cpu().detach().numpy()
         distances_matrix = scipy.spatial.distance.cdist(distance_features, distance_features, self.distance_function)
         min_distance, max_distance = distances_matrix.min(), distances_matrix.max()
@@ -38,11 +37,22 @@ class GraphBuilder:
             result = 0.
         else:
             result = 1 - x
-
         return result
 
     def compute_row_level_batch(self, batch):
-        raise NotImplementedError("Edge-level datasets have to be managed yet.")
+        distance_features_indeces_1 = torch.IntTensor(self.params_indeces[0][0])
+        distance_features__indeces_2 = torch.IntTensor(self.params_indeces[1][0])
+        node_features_indeces_1 = torch.IntTensor(self.params_indeces[0][1])
+        node_features_indeces_2 = torch.IntTensor(self.params_indeces[1][1])
+        distance_features_1 = torch.index_select(batch, dim=1, index=distance_features_indeces_1)
+        distance_features_2 = torch.index_select(batch, dim=1, index=distance_features__indeces_2)
+        node_features_1 = torch.index_select(batch, dim=1, index=node_features_indeces_1)
+        node_features_2 = torch.index_select(batch, dim=1, index=node_features_indeces_2)
+        row_level_batch_1 = torch.hstack((distance_features_1, node_features_1))
+        row_level_batch_2 = torch.hstack((distance_features_2, node_features_2))
+        row_level_batch = torch.vstack((row_level_batch_1, row_level_batch_2))
+        self.params_indeces = list(range(distance_features_indeces_1.shape[0]))
+        return row_level_batch
 
     def compute_graph(self, batch):
         if self.edge_level_batch:
