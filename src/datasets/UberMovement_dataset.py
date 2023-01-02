@@ -208,18 +208,12 @@ class UberMovementDataset(CheckedDataset):
         """
         centroids, stds = city_centroids_stds[0], city_centroids_stds[1]
         num_zones, coord_dims = centroids.shape
-        print("num_zones:", num_zones)
-        print("coord_dims:", coord_dims)
         city_center = centroids.mean(axis=0)
         centroids_std = centroids.std(axis=0)
         centroids = (centroids - city_center) / centroids_std
         city_center_broadcasted = np.broadcast_to(city_center,
                                                   (num_zones, coord_dims))
         ret = np.array([city_center_broadcasted, centroids, stds])
-        print("city center:", city_center)
-        print("new mean:", centroids.mean())
-        print("new std:", centroids.std())
-        print("ret shape:", ret.shape)
         return ret
 
     def _build_centroid_spatial_data(
