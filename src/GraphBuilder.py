@@ -16,6 +16,7 @@ class GraphBuilder:
     def compute_nodes_matrix(self, batch):
         return self.encoder.forward_det(batch)
 
+
     def compute_edges_matrices(self, batch):
         params_indeces = torch.IntTensor(self.params_indeces)
         distance_features = torch.index_select(batch, dim=1, index=params_indeces)
@@ -37,6 +38,7 @@ class GraphBuilder:
             result = 0.
         else:
             result = 1 - x
+
         return result
 
     def compute_row_level_batch(self, batch):
