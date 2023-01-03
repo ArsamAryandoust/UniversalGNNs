@@ -1,6 +1,6 @@
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.multioutput import RegressorChain
-from datasets import ClimARTDataset, UberMovementDataset
+from datasets import ClimARTDataset, UberMovementDataset, MultiSplitDataset
 import time
 
 SEED = 42
@@ -22,7 +22,7 @@ def RFRegressor(train_data, test_data):
     # score: 0.8668907242816928  -> "inf" values set to 0
 
 #####################################
-#               SVM                 #
+#         Gradient Boosting         #
 #####################################
 def GradBoostRegressor(train_data, test_data):
     print("Fitting a Gradient Boosting regressor:")
@@ -46,7 +46,7 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 import pytorch_lightning as pl
 import torch.nn.functional as F
-from torchmetrics import R2Score
+from sklearn.metrics import r2_score
 device = torch.device("cuda")
 
 class MLP(pl.LightningModule):
@@ -58,7 +58,6 @@ class MLP(pl.LightningModule):
         self.hidden = nn.Linear(hidden_size, hidden_size)
         self.output_layer = nn.Linear(hidden_size, output_size)
         self.relu = nn.ReLU()
-        self.r2score  = R2Score(num_outputs=output_size).to(device)
 
     def forward(self, x):
         x = self.layer_norm(x)
@@ -85,7 +84,7 @@ class MLP(pl.LightningModule):
         x, y = x.float(), y.float()
         out = self(x)
         loss =  F.mse_loss(out, y)
-        r2 = self.r2score(out, y)
+        r2 = r2_score(y, out)
         self.log('test_loss', loss, on_epoch=True)
         self.log('r2_score', r2, on_epoch=True)
         return loss
@@ -111,22 +110,22 @@ def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, lab
 datasets = [ClimARTDataset, UberMovementDataset]
 
 scores = {}
-for dataset in datasets:
-    batch_size = 64
-    train_dataset = dataset(split="training")
-    val_dataset = dataset(split="validation")
+for dataset_class in datasets:
+    batch_size = 128
+    multisplit_dataset = MultiSplitDataset(dataset_class, test=False)
+    train_dataset, val_dataset, _ = multisplit_dataset.get_splits()
 
 
-    scores[dataset.__name__] = {}
-    if dataset == UberMovementDataset:
+    scores[dataset_class.__name__] = {}
+    if dataset_class == UberMovementDataset:
         batch_size = 4096
         test_dataset = val_dataset
     else:
-        test_dataset = dataset(split="testing")
+        test_dataset = dataset_class(split="testing", normalize=True)
 
-    scores[dataset.__name__]["RF"] = RFRegressor(train_dataset.data, test_dataset.data)
-    scores[dataset.__name__]["GB"] = GradBoostRegressor(train_dataset.data, test_dataset.data)
-    scores[dataset.__name__]["MLP"] = MLPRegressor(train_dataset, val_dataset, test_dataset, train_dataset.input_dim, train_dataset.label_dim, batch_size)
+    scores[dataset_class.__name__]["RF"] = RFRegressor(train_dataset.data, test_dataset.data)
+    # scores[dataset_class.__name__]["GB"] = GradBoostRegressor(train_dataset.data, test_dataset.data)
+    scores[dataset_class.__name__]["MLP"] = MLPRegressor(train_dataset, val_dataset, test_dataset, train_dataset.input_dim, train_dataset.label_dim, batch_size)
 
 
 print(scores)

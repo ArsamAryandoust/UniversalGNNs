@@ -1,4 +1,4 @@
-from datasets import MultiSplitDataset, MultiDataset, MultiDatasetSampler, ClimARTDataset
+from datasets import MultiSplitDataset, MultiDataset, MultiDatasetBatchSampler, ClimARTDataset
 from models import AutoEncoder, VAE, UniversalGNN
 
 from pathlib import Path
@@ -53,13 +53,13 @@ def load_datasets(dataset_classes: list[type], batch_size:int, num_batches_per_e
     val_dataset = MultiDataset(val_datasets)
     test_dataset = MultiDataset(test_datasets)
 
-    train_sampler = MultiDatasetSampler(train_dataset, batch_size, num_batches_per_epoch)
-    val_sampler = MultiDatasetSampler(val_dataset, batch_size, sequential=True)
-    test_sampler = MultiDatasetSampler(test_dataset, batch_size, sequential=True)
+    train_sampler = MultiDatasetBatchSampler(train_dataset, batch_size, num_batches_per_epoch)
+    val_sampler = MultiDatasetBatchSampler(val_dataset, batch_size, sequential=True)
+    test_sampler = MultiDatasetBatchSampler(test_dataset, batch_size, sequential=True)
 
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=128, collate_fn=train_dataset.collate_fn)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, sampler=val_sampler, num_workers=128, collate_fn=val_dataset.collate_fn)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, sampler=test_sampler, num_workers=128, collate_fn=test_dataset.collate_fn)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, batch_sampler=train_sampler, num_workers=128, collate_fn=train_dataset.collate_fn)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, batch_sampler=val_sampler, num_workers=128, collate_fn=val_dataset.collate_fn)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, batch_sampler=test_sampler, num_workers=128, collate_fn=test_dataset.collate_fn)
 
     return train_loader, val_loader, test_loader
 

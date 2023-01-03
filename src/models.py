@@ -181,7 +181,7 @@ class UniversalGNN(pl.LightningModule):
         return dataset.regressor(out)
 
     def common_step(self, batch, split:str):
-        (x, y), dataset = batch
+        x, y, dataset = batch
         out = self(x, dataset)
         loss = F.mse_loss(out, y)
         r2 = r2_score(y, out)
