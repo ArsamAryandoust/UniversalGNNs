@@ -4,3 +4,4 @@ src/.ipynb_checkpoints
 __pycache__
 lightning_logs/
 logs/
+checkpoints/

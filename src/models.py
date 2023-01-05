@@ -180,22 +180,25 @@ class GNN(nn.Module):
         return x.float()
 
 class UniversalGNN(pl.LightningModule):
-    def __init__(self, latent_dim, hidden_dim, out_dim):
+    def __init__(self, latent_dim, hidden_dim, out_dim, autoencoders_dict, graphbuilders_dict, regressors_dict):
         super().__init__()
         self.gnn = GNN(latent_dim, hidden_dim, out_dim)
+        self.autoencoders = nn.ModuleDict(autoencoders_dict)
+        self.graphbuilders = graphbuilders_dict
+        self.regressors = nn.ModuleDict(regressors_dict)
     
     def forward(self, x: torch.Tensor, dataset: CheckedDataset):
-        nodes_matrix, edges_indeces, edges_weights = dataset.graph_builder.compute_graph(x)
+        nodes_matrix, edges_indeces, edges_weights = self.graphbuilders[type(dataset).__name__].compute_graph(x, self.device)
         out = self.gnn(nodes_matrix, edges_indeces, edges_weights)
-        return dataset.regressor(out)
+        return self.regressors[type(dataset).__name__](out)
 
     def common_step(self, batch, split:str):
         x, y, dataset = batch
         out = self(x, dataset)
         loss = F.mse_loss(out, y)
         r2 = r2_score(out, y)
-        self.log(f"{split} loss", loss, on_epoch=True)
-        self.log(f"{split} R2", r2, on_epoch=True)
+        self.log(f"{split} loss", loss, on_epoch=True, batch_size=len(x))
+        self.log(f"{split} R2", r2, on_epoch=True, batch_size=len(x))
         return loss
 
     def training_step(self, batch, batch_idx):

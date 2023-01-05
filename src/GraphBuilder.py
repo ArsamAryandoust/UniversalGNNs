@@ -5,19 +5,18 @@ import scipy
 
 class GraphBuilder:
 
-    def __init__(self, distance_function, params_indeces, connectivity, encoder, edge_level_batch=False, device="cpu"):
+    def __init__(self, distance_function, params_indeces, connectivity, encoder, edge_level_batch=False):
         self.distance_function = distance_function
         self.params_indeces = params_indeces
         self.connectivity = connectivity
         self.encoder = encoder
         self.edge_level_batch = edge_level_batch
-        self.device = device
     
     def compute_nodes_matrix(self, batch):
         return self.encoder.get_latent(batch)
 
-    def compute_edges_matrices(self, batch):
-        distance_features_indeces = torch.IntTensor(self.params_indeces)
+    def compute_edges_matrices(self, batch, device):
+        distance_features_indeces = torch.IntTensor(self.params_indeces).to(device)
         distance_features = torch.index_select(batch, dim=1, index=distance_features_indeces)
         distance_features = distance_features.cpu().detach().numpy()
         distances_matrix = scipy.spatial.distance.cdist(distance_features, distance_features, self.distance_function)
@@ -28,7 +27,7 @@ class GraphBuilder:
         sparsity = 1 - self.connectivity
         quantile = np.quantile(scores_matrix, q=sparsity)
         scores_matrix = np.where(scores_matrix > quantile, scores_matrix, 0.)
-        scores_matrix = torch.from_numpy(scores_matrix).to(self.device)
+        scores_matrix = torch.from_numpy(scores_matrix).to(device)
         edges_indeces, edges_weights = torch_geometric.utils.dense_to_sparse(scores_matrix)
         return edges_indeces, edges_weights
 
@@ -54,9 +53,9 @@ class GraphBuilder:
         self.params_indeces = list(range(distance_features_indeces_1.shape[0]))
         return row_level_batch
 
-    def compute_graph(self, batch):
+    def compute_graph(self, batch, device):
         if self.edge_level_batch:
             batch = self.compute_row_level_batch(batch)
         nodes_matrix = self.compute_nodes_matrix(batch)
-        edges_indeces, edges_weights = self.compute_edges_matrices(batch)
+        edges_indeces, edges_weights = self.compute_edges_matrices(batch, device)
         return nodes_matrix, edges_indeces, edges_weights

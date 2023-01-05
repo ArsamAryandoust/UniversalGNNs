@@ -43,20 +43,25 @@ def train_autoencoder(encoder_class: type, dataloader: DataLoader, load_data: bo
 
 def load_datasets(dataset_classes: list[type],
                   batch_size: int,
-                  num_batches_per_epoch: int = 1000) -> tuple[MultiDataset, MultiDataset, MultiDataset]:
+                  num_batches_per_epoch: int = 1000) -> tuple[tuple[MultiDataset, MultiDataset, MultiDataset], dict, dict, dict]:
     """
     Loads the datasets specified from dataset_classes, together with the autoencoder(s) needed to feed the information
-    into the GNN and the final regressor.
+    into the GNN and the final regressor. 
+    Returns the train, validation and test dataloaders, together with the autoencoders, GraphBuilders and regressors.
 
-    Returns the train, validation and test dataloaders.
+    return: ((train_loader, val_loader, test_loader), autoencoders_dict, graphbuilders_dict, regressors_dict)
+
+    All the dicts are of the form dict[dataset_name] = value, where dataset_name == dataset.__name__
     """
     LATENT_DIM = 512
     LOAD_ENCODER = True
     GRAPH_CONNECTIVITY = 0.5
-    DEVICE = "cpu"
     train_datasets = []
     val_datasets = []
     test_datasets = []
+    autoencoders_dict = {}
+    graphbuilders_dict = {}
+    regressors_dict = {}
     for dataset_class in dataset_classes:
         dataset = MultiSplitDataset(dataset_class)
         splits = dataset.get_splits()
@@ -71,8 +76,7 @@ def load_datasets(dataset_classes: list[type],
                                             params_indeces=splits[0].spatial_temporal_indeces,
                                             connectivity=GRAPH_CONNECTIVITY,
                                             encoder=autoencoder,
-                                            edge_level_batch=splits[0].edge_level,
-                                            device=DEVICE)
+                                            edge_level_batch=splits[0].edge_level)
         for split in splits:
             split.graph_builder = graph_builder
         
@@ -90,6 +94,11 @@ def load_datasets(dataset_classes: list[type],
         val_datasets.append(splits[1])
         test_datasets.append(splits[2])
 
+        autoencoders_dict[dataset_class.__name__] = autoencoder
+        graphbuilders_dict[dataset_class.__name__] = graph_builder
+        regressors_dict[dataset_class.__name__] = regressor
+
+
     train_dataset = MultiDataset(train_datasets)
     val_dataset = MultiDataset(val_datasets)
     test_dataset = MultiDataset(test_datasets)
@@ -98,21 +107,22 @@ def load_datasets(dataset_classes: list[type],
     val_sampler = MultiDatasetBatchSampler(val_dataset, batch_size, sequential=True, drop_last=True)
     test_sampler = MultiDatasetBatchSampler(test_dataset, batch_size, sequential=True, drop_last=True)
 
-    train_loader = DataLoader(train_dataset, batch_sampler=train_sampler, num_workers=128, collate_fn=train_dataset.collate_fn)
-    val_loader = DataLoader(val_dataset, batch_sampler=val_sampler, num_workers=128, collate_fn=val_dataset.collate_fn)
-    test_loader = DataLoader(test_dataset, batch_sampler=test_sampler, num_workers=128, collate_fn=test_dataset.collate_fn)
+    train_loader = DataLoader(train_dataset, batch_sampler=train_sampler, num_workers=0, collate_fn=train_dataset.collate_fn)
+    val_loader = DataLoader(val_dataset, batch_sampler=val_sampler, num_workers=0, collate_fn=val_dataset.collate_fn)
+    test_loader = DataLoader(test_dataset, batch_sampler=test_sampler, num_workers=0, collate_fn=test_dataset.collate_fn)
 
-    return train_loader, val_loader, test_loader
+    return (train_loader, val_loader, test_loader), autoencoders_dict, graphbuilders_dict, regressors_dict
 
 
 def main(args):
     # load the datasets
     dataset_classes = [ClimARTDataset]
-    model = UniversalGNN(512, 512, 512)
-    train_loader, val_loader, test_loader = load_datasets(dataset_classes, 128, 10)
+    loaders, autoencoders_dict, graphbuilders_dict, regressors_dict = load_datasets(dataset_classes, 128, 100)
+    train_loader, val_loader, test_loader = loaders
+    model = UniversalGNN(512, 512, 512, autoencoders_dict, graphbuilders_dict, regressors_dict)
     # train the GNN
     logger = TensorBoardLogger("./logs/", name="UniversalGNN")
-    trainer = pl.Trainer( accelerator="cpu", max_epochs=1, log_every_n_steps=1, logger=logger)
+    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=1, log_every_n_steps=1, logger=logger)
     trainer.fit(model, train_loader, val_loader)
     trainer.test(model, test_loader)
     
