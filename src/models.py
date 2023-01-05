@@ -5,7 +5,22 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 from torch.optim import Adam
 from datasets import CheckedDataset
-from sklearn.metrics import r2_score
+from torchmetrics.functional import r2_score
+
+class MLP(nn.Module):
+
+    def __init__(self, input_size, hidden_size, output_size):
+        super().__init__()
+        self.input_layer = nn.Linear(input_size, hidden_size)
+        self.hidden = nn.Linear(hidden_size, hidden_size)
+        self.output_layer = nn.Linear(hidden_size, output_size)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        x = self.relu(self.input_layer(x))
+        x = self.relu(self.hidden(x))
+        x = self.output_layer(x)
+        return x
 
 # for now using an MLP as encoder and decoder
 class VariationalEncoder(nn.Module):
@@ -96,13 +111,11 @@ class AutoEncoder(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         loss = self.common_step(batch)
         self.log('training_loss', loss, on_epoch=True)
-        ae_losses.append(float(loss))
         return loss
 
     def validation_step(self, batch, batch_idx):
         loss = self.common_step(batch)
         self.log('validation_loss', loss, on_epoch=True)
-        ae_val_losses.append(float(loss))
         return loss
 
     def configure_optimizers(self):
@@ -141,15 +154,12 @@ class VAE(pl.LightningModule):
         loss, kl = self.common_step(batch)
         self.log('training_loss', loss, on_epoch=True)
         self.log('training_kl', kl, on_epoch=True)
-        vae_losses.append(float(loss))
-        kls.append(float(kl))
         return loss + kl
 
     def validation_step(self, batch, batch_idx):
         loss, kl = self.common_step(batch)
         self.log('validation_loss', loss, on_epoch=True)
         self.log('validation_kl', kl, on_epoch=True)
-        vae_val_losses.append(float(loss))
         return loss + kl
 
     def configure_optimizers(self):
@@ -159,21 +169,20 @@ class VAE(pl.LightningModule):
 class GNN(nn.Module):
     def __init__(self, in_channels: int, hidden_channels: int, out_channels: int):
         super().__init__()
-        self.save_hyperparameters()
         self.conv1 = GCNConv(in_channels, hidden_channels)
         self.conv2 = GCNConv(hidden_channels, out_channels)
 
     def forward(self, node_matrix: torch.Tensor, edge_index: torch.Tensor, edge_weights) -> torch.Tensor:
         # x: Node feature matrix of shape [num_nodes, in_channels]
         # edge_index: Graph connectivity matrix of shape [2, num_edges]
-        x = self.conv1(x, edge_index, edge_weights).relu()
-        x = self.conv2(x, edge_index, edge_weights)
-        return x
+        x = self.conv1(node_matrix, edge_index, edge_weights).relu()
+        x = self.conv2(x.float(), edge_index, edge_weights)
+        return x.float()
 
 class UniversalGNN(pl.LightningModule):
-    def __init__(self, latent_dim):
+    def __init__(self, latent_dim, hidden_dim, out_dim):
         super().__init__()
-        self.gnn = GNN(latent_dim, ..., ...)
+        self.gnn = GNN(latent_dim, hidden_dim, out_dim)
     
     def forward(self, x: torch.Tensor, dataset: CheckedDataset):
         nodes_matrix, edges_indeces, edges_weights = dataset.graph_builder.compute_graph(x)
@@ -184,7 +193,7 @@ class UniversalGNN(pl.LightningModule):
         x, y, dataset = batch
         out = self(x, dataset)
         loss = F.mse_loss(out, y)
-        r2 = r2_score(y, out)
+        r2 = r2_score(out, y)
         self.log(f"{split} loss", loss, on_epoch=True)
         self.log(f"{split} R2", r2, on_epoch=True)
         return loss
@@ -195,8 +204,12 @@ class UniversalGNN(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         return self.common_step(batch, "validation")
     
-    def validation_step(self, batch, batch_idx):
+    def test_step(self, batch, batch_idx):
         return self.common_step(batch, "test")
+    
+    def configure_optimizers(self):
+        optimizer = Adam(self.parameters(), lr=1e-3)
+        return optimizer
         
 
 if __name__ == "__main__":

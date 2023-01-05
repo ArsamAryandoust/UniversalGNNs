@@ -86,7 +86,7 @@ class MultiDatasetBatchSampler(Sampler):
         self.batch_size = batch_size
         self.num_batches_per_epoch = num_batches_per_epoch
         self.sequential = sequential
-        self.generator = torch.Generator(device="cuda")
+        self.generator = torch.Generator()
 
     def __iter__(self) -> Iterator[int]:
 
@@ -99,7 +99,7 @@ class MultiDatasetBatchSampler(Sampler):
                 batch = self._generate_sequential_batch()
 
         else:
-            for _ in self.num_batches_per_epoch:
+            for _ in range(self.num_batches_per_epoch):
                 yield self._generate_random_batch()
 
     def _generate_sequential_batch(self):
@@ -116,15 +116,13 @@ class MultiDatasetBatchSampler(Sampler):
             
             # check if the end is outside of the current dataset
             if end > dataset_end:
-                print()
-                print(f"out of bounds: end={end}, dataset_end={dataset_end}!")
                 self.sequential_sample = dataset_end
                 self.sequential_dataset += 1
                 if not self.drop_last:
-                    return torch.arange(start=start, end=dataset_end, device="cuda")
+                    return torch.arange(start=start, end=dataset_end)
             else:
                 self.sequential_sample = end
-                return torch.arange(start=start, end=end, device="cuda")
+                return torch.arange(start=start, end=end)
         return None
 
     def _generate_random_batch(self) -> List[int]:
@@ -132,9 +130,8 @@ class MultiDatasetBatchSampler(Sampler):
         batch_samples = torch.randint(
             low=0,
             high=self.multidataset.dataset_lengths[dataset_idx],
-            size=(self.batch_size),
-            generator=self.generator,
-            device="cuda")
+            size=(self.batch_size,),
+            generator=self.generator)
         # batch_samples = generator.integers(0, self.multidataset.dataset_lengths[dataset_idx], size=self.batch_size, dtype=np.int64)
         batch_samples += self.multidataset.dataset_offsets[dataset_idx]
         return batch_samples

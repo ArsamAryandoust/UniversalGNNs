@@ -39,6 +39,7 @@ class UberMovementDataset(CheckedDataset):
         # 11) geometric_standard_deviation_travel_time
         print("============================================================")
         print(f"Loading UberMovement dataset on {split} split:")
+        self.edge_level = True
         self.normalize = normalize
         self.NUM_ORIGINAL_COLUMNS = 11  # original columns
         self.NUM_LABELS = 4

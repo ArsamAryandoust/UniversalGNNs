@@ -9,6 +9,8 @@ class CheckedDataset(ABC, Dataset):
         super().__init__()
         self.data = None
         # attributes necessary to the UniversalGNN
+        self.spatial_temporal_indeces: list[int] = None
+        self.edge_level : bool = None
         self.graph_builder : GraphBuilder = None
         self.regressor : nn.Module = None
 

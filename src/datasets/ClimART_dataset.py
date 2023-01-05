@@ -18,6 +18,8 @@ class ClimARTDataset(CheckedDataset):
                  sanitize=True):
         print("============================================================")
         print(f"Loading ClimART dataset on {split} split:")
+        self.edge_level = False
+        self.spatial_temporal_indeces = list(range(5))
         self.normalize = normalize
         self.NUM_COLUMNS = 1268
         self.NUM_INPUTS = 970
