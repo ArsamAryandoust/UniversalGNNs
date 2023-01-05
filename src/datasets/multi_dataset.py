@@ -1,10 +1,13 @@
 import torch
 import numpy as np
+import random
 from torch.utils.data import Sampler, Dataset
 from datasets import CheckedDataset
 from typing import Iterator, List, Tuple
 
+
 class MultiDataset(Dataset):
+
     def __init__(self, datasets: List[CheckedDataset]):
         super().__init__()
         self.dataset_lengths = [len(d) for d in datasets]
@@ -17,7 +20,7 @@ class MultiDataset(Dataset):
             self.dataset_offsets.append(sum)
             sum += l
         self.num_samples = sum
-        
+
     def __len__(self) -> int:
         return self.num_samples
 
@@ -46,40 +49,89 @@ class MultiDataset(Dataset):
             X[i] = x
             Y[i] = y
         return X, Y, self.datasets[d]
-        
 
-class MultiDatasetSampler(Sampler):
-    def __init__(self, multidataset: MultiDataset, batch_size: int, num_batches_per_epoch, sequential=False):
+
+class MultiDatasetBatchSampler(Sampler):
+
+    def __init__(self,
+                 multidataset: MultiDataset,
+                 batch_size: int,
+                 num_batches_per_epoch: int = None,
+                 sequential: bool = False,
+                 drop_last: bool = True):
         """
-        The parameter 'sequential' is only used for debugging purposes, the last batch it will generate 
-        for a dataset will contain samples from the next dataset, causing an AssertionError.
+        Batch sampler for the MultiDataset class. For each batch it first samples the dataset uniformly at random,
+        then it samples batch_size samples uniformly at random, with repetition.
+
+        If sequential is set to True then the datasets will be sampled in order from the first to the 
+        last dataset and from the first to the last sample in each dataset. The last samples that don't 
+        Fit a full batch will either be sampled or not depending on the flag drop_last.
         """
         super().__init__(multidataset)
+        self.drop_last = drop_last
         self.multidataset = multidataset
-        if not sequential and not (isinstance(batch_size, int) and isinstance(num_batches_per_epoch, int)):
-            raise TypeError(f"""Must provide both a integer batch size and num_batches_per_epoch when not using a sequential dataset!
-                batch_size={batch_size}, num_batches_per_epoch={num_batches_per_epoch}.""")
-        if batch_size <= 0 or num_batches_per_epoch <= 0:
-            raise ValueError(f"""Both batch_size and num_batches_per_epoch must be >0!
-                batch_size={batch_size}, num_batches_per_epoch={num_batches_per_epoch}.""")
+        if not isinstance(batch_size, int):
+            raise TypeError(
+                f"""Must provide an integer batch size to sample: batch_size={batch_size}."""
+            )
+        if not sequential and (not isinstance(num_batches_per_epoch, int) or num_batches_per_epoch <= 0):
+            raise TypeError(
+                f"""Must provide an integer num_batches_per_epoch > 0 when not using a sequential dataset!
+                batch_size={batch_size}, num_batches_per_epoch={num_batches_per_epoch}."""
+            )
+        if batch_size <= 0 :
+            raise ValueError(
+                f"""Both batch_size must be > 0! batch_size={batch_size}."""
+            )
         self.batch_size = batch_size
         self.num_batches_per_epoch = num_batches_per_epoch
         self.sequential = sequential
+        self.generator = torch.Generator()
 
     def __iter__(self) -> Iterator[int]:
 
         if self.sequential:
-            yield from range(self.multidataset.num_samples)
-        else:
-            yield from self._generate_batches()
+            self.sequential_dataset = 0
+            self.sequential_sample = 0
+            batch = self._generate_sequential_batch()
+            while batch is not None:
+                yield batch
+                batch = self._generate_sequential_batch()
 
-    def _generate_batches(self) -> List[int]:
-        generator = np.random.default_rng(seed=42)
-        datasets = torch.multinomial(torch.ones((self.multidataset.num_datasets)), self.num_batches_per_epoch, replacement=True).tolist()
-        samples_list = []
-        for d in datasets:
-            # batch_samples = torch.multinomial(torch.ones((self.multidataset.dataset_lengths[d])), self.batch_size, replacement=False)
-            batch_samples = generator.integers(0, self.multidataset.dataset_lengths[d], size=self.batch_size, dtype=np.int64)
-            batch_samples += self.multidataset.dataset_offsets[d]
-            samples_list += batch_samples.tolist()
-        return samples_list
+        else:
+            for _ in range(self.num_batches_per_epoch):
+                yield self._generate_random_batch()
+
+    def _generate_sequential_batch(self):
+        while self.sequential_dataset < self.multidataset.num_datasets:
+            start = self.sequential_sample
+            end = start + self.batch_size
+            
+            # get the dataset end sample
+            dataset_end = 0
+            if self.sequential_dataset < self.multidataset.num_datasets - 1:
+                dataset_end = self.multidataset.dataset_offsets[self.sequential_dataset + 1]
+            else:
+                dataset_end = self.multidataset.num_samples
+            
+            # check if the end is outside of the current dataset
+            if end > dataset_end:
+                self.sequential_sample = dataset_end
+                self.sequential_dataset += 1
+                if not self.drop_last:
+                    return torch.arange(start=start, end=dataset_end)
+            else:
+                self.sequential_sample = end
+                return torch.arange(start=start, end=end)
+        return None
+
+    def _generate_random_batch(self) -> List[int]:
+        dataset_idx = random.randint(0, self.multidataset.num_datasets - 1)
+        batch_samples = torch.randint(
+            low=0,
+            high=self.multidataset.dataset_lengths[dataset_idx],
+            size=(self.batch_size,),
+            generator=self.generator)
+        # batch_samples = generator.integers(0, self.multidataset.dataset_lengths[dataset_idx], size=self.batch_size, dtype=np.int64)
+        batch_samples += self.multidataset.dataset_offsets[dataset_idx]
+        return batch_samples

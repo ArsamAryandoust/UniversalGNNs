@@ -1,9 +1,10 @@
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.multioutput import RegressorChain
-from datasets import ClimARTDataset, UberMovementDataset
+from datasets import ClimARTDataset, UberMovementDataset, MultiSplitDataset
 import time
 
 SEED = 42
+
 
 #####################################
 #           Random Forests          #
@@ -21,8 +22,9 @@ def RFRegressor(train_data, test_data):
     # score: 0.41579297007803917 -> full dataset
     # score: 0.8668907242816928  -> "inf" values set to 0
 
+
 #####################################
-#               SVM                 #
+#         Gradient Boosting         #
 #####################################
 def GradBoostRegressor(train_data, test_data):
     print("Fitting a Gradient Boosting regressor:")
@@ -37,6 +39,7 @@ def GradBoostRegressor(train_data, test_data):
     # ============== CLIMART ===================
     # score: 0.4399313160686012 -> full dataset
 
+
 #####################################
 #               MLP                 #
 #####################################
@@ -46,10 +49,13 @@ from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 import pytorch_lightning as pl
 import torch.nn.functional as F
-from torchmetrics import R2Score
+from torchmetrics.functional import r2_score
+
 device = torch.device("cuda")
 
+
 class MLP(pl.LightningModule):
+
     def __init__(self, input_size, hidden_size, output_size):
         super().__init__()
         print(f"MLP with: layers of size: {input_size} -> {hidden_size} -> {hidden_size} -> {output_size}.")
@@ -58,7 +64,6 @@ class MLP(pl.LightningModule):
         self.hidden = nn.Linear(hidden_size, hidden_size)
         self.output_layer = nn.Linear(hidden_size, output_size)
         self.relu = nn.ReLU()
-        self.r2score  = R2Score(num_outputs=output_size).to(device)
 
     def forward(self, x):
         x = self.layer_norm(x)
@@ -66,13 +71,13 @@ class MLP(pl.LightningModule):
         x = self.relu(self.hidden(x))
         x = self.output_layer(x)
         return x
-    
+
     def training_step(self, batch, batch_idx):
         # training_step defines the train loop. It is independent of forward
         x, y = batch
         x, y = x.float(), y.float()
         out = self(x)
-        loss =  F.mse_loss(out, y)
+        loss = F.mse_loss(out, y)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -84,18 +89,19 @@ class MLP(pl.LightningModule):
         x, y = batch
         x, y = x.float(), y.float()
         out = self(x)
-        loss =  F.mse_loss(out, y)
-        r2 = self.r2score(out, y)
+        loss = F.mse_loss(out, y)
+        r2 = r2_score(out, y)
         self.log('test_loss', loss, on_epoch=True)
         self.log('r2_score', r2, on_epoch=True)
         return loss
-    
+
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
         return self(batch[0].float())
-    
+
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=1e-3)
         return optimizer
+
 
 def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, label_dim, batch_size=64):
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=64, shuffle=True)
@@ -108,26 +114,26 @@ def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, lab
     # trainer.test(mlp, validation_loader)
     return trainer.test(mlp, test_loader)
 
-datasets = [ClimARTDataset, UberMovementDataset]
+
+datasets = [UberMovementDataset]
 
 scores = {}
-for dataset in datasets:
-    batch_size = 64
-    train_dataset = dataset(split="training")
-    val_dataset = dataset(split="validation")
+for dataset_class in datasets:
+    batch_size = 128
+    multisplit_dataset = MultiSplitDataset(dataset_class, test=False, normalize_full=False, use_normalized_coordinates=True)
+    train_dataset, val_dataset, _ = multisplit_dataset.get_splits()
 
-
-    scores[dataset.__name__] = {}
-    if dataset == UberMovementDataset:
+    scores[dataset_class.__name__] = {}
+    if dataset_class == UberMovementDataset:
         batch_size = 4096
         test_dataset = val_dataset
     else:
-        test_dataset = dataset(split="testing")
+        test_dataset = dataset_class(split="testing", normalize=True)
 
-    scores[dataset.__name__]["RF"] = RFRegressor(train_dataset.data, test_dataset.data)
-    scores[dataset.__name__]["GB"] = GradBoostRegressor(train_dataset.data, test_dataset.data)
-    scores[dataset.__name__]["MLP"] = MLPRegressor(train_dataset, val_dataset, test_dataset, train_dataset.input_dim, train_dataset.label_dim, batch_size)
-
+    scores[dataset_class.__name__]["RF"] = RFRegressor(train_dataset.data, test_dataset.data)
+    # scores[dataset_class.__name__]["GB"] = GradBoostRegressor(train_dataset.data, test_dataset.data)
+    scores[dataset_class.__name__]["MLP"] = MLPRegressor(train_dataset, val_dataset, test_dataset, train_dataset.input_dim,
+                                                         train_dataset.label_dim, batch_size)
 
 print(scores)
 with open("results_baselines.txt", "w") as f:
