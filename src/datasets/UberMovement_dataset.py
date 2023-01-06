@@ -103,7 +103,7 @@ class UberMovementDataset(CheckedDataset):
         files.sort()
         for file in tqdm(files):
             df = pd.read_csv(file)
-            main_data_frame = pd.concat([main_data_frame, df])
+            main_data_frame = pd.concat([main_data_frame, df],  ignore_index=True)
 
         print(main_data_frame.head())
 
@@ -137,13 +137,8 @@ class UberMovementDataset(CheckedDataset):
         # put the processed spatial data inside the main_dataframe
         main_data_frame.drop(labels=["city_id", "source_id", "destination_id"],
                              axis="columns",
-                             inplace=True)
-        main_data_frame[spatial_data.columns] = spatial_data
-        # reorder the columns to have the statial ones at the beginning
-        spatial_data_cols_len = len(spatial_data.columns)
-        cols = main_data_frame.columns.tolist()
-        cols = cols[-spatial_data_cols_len:] + cols[:-spatial_data_cols_len]
-        main_data_frame = main_data_frame[cols]
+                             inplace=True) 
+        main_data_frame = pd.concat([spatial_data, main_data_frame], axis=1)
 
         # build the final X, Y
         self.NUM_COLUMNS = len(main_data_frame.columns)
@@ -235,7 +230,7 @@ class UberMovementDataset(CheckedDataset):
             0] * city_zones_centroids_std[0].shape[2]
         source_data = np.zeros((len(city_ids), spatial_dims))
         dest_data = np.zeros((len(city_ids), spatial_dims))
-
+        cities_count = [0] * 14
         for i, (cid, sid, did) in enumerate(
                 tqdm(zip(city_ids, source_ids, destination_ids),
                      total=len(city_ids))):
@@ -245,13 +240,15 @@ class UberMovementDataset(CheckedDataset):
             # print("sid:", sid)
             # print("did:", did)
             # print("centroids shape:", city_zones_centroids_std[cid].shape)
-            if cid != 7:
+            cities_count[cid] += 1
+            if cid != 6:
                 sid -= 1
                 did -= 1
-            assert (sid >= 0)
-            assert (did >= 0)
+            if  sid < 0 or did < 0:
+                raise ValueError(f"Error: a zone id cannot be negative! City id:{cid}, sid={sid}, did={did}.")
             source_data[i] = city_zones_centroids_std[cid][:, sid, :].flatten()
             dest_data[i] = city_zones_centroids_std[cid][:, did, :].flatten()
+        print("Routes per city::", cities_count)
         data = np.hstack([source_data, dest_data])
         print("spatial data shape:", data.shape)
         if spatial_dims == 6:
