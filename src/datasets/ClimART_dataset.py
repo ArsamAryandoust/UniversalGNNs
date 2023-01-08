@@ -12,7 +12,7 @@ class ClimARTDataset(CheckedDataset):
     """
 
     def __init__(self,
-                 dataset_path: str | Path = "/TasksEnergyTransition/ClimART/pristine/",
+                 dataset_path: str | Path = "/EnergyTransitionTasks/ClimART/pristine/",
                  split: str = "training",
                  normalize=False,
                  sanitize=True):
