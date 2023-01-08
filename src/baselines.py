@@ -1,6 +1,7 @@
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.multioutput import RegressorChain
 from datasets import ClimARTDataset, UberMovementDataset, MultiSplitDataset
+from models import MLP
 import time
 
 SEED = 42
@@ -46,94 +47,86 @@ def GradBoostRegressor(train_data, test_data):
 import torch
 import torch.nn as nn
 from torch.optim import Adam
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 import pytorch_lightning as pl
 import torch.nn.functional as F
 from torchmetrics.functional import r2_score
+from pytorch_lightning.loggers import WandbLogger
 
 device = torch.device("cuda")
 
 
-class MLP(pl.LightningModule):
+class MLP_PL(MLP, pl.LightningModule):
 
-    def __init__(self, input_size, hidden_size, output_size):
-        super().__init__()
-        print(f"MLP with: layers of size: {input_size} -> {hidden_size} -> {hidden_size} -> {output_size}.")
-        self.layer_norm = nn.LayerNorm(input_size)
-        self.input_layer = nn.Linear(input_size, hidden_size)
-        self.hidden = nn.Linear(hidden_size, hidden_size)
-        self.output_layer = nn.Linear(hidden_size, output_size)
+    def __init__(self, input_size: int, hidden_sizes: list[int], output_size: int):
+        super().__init__(input_size, hidden_sizes, output_size)
+        print(f"MLP with: layers of size: {input_size} -> {hidden_sizes} -> {output_size}.")
+        assert len(hidden_sizes) > 0, "MLP must have at least 1 hidden layer!"
+        self.input_layer = nn.Linear(input_size, hidden_sizes[0])
+        self.hidden = nn.Sequential()
+        for i in range(len(hidden_sizes) - 1):
+            self.hidden.append(nn.Linear(hidden_sizes[i], hidden_sizes[i+1]))
+            self.hidden.append(nn.ReLU())
+
+        self.output_layer = nn.Linear(hidden_sizes[-1], output_size)
         self.relu = nn.ReLU()
 
     def forward(self, x):
-        x = self.layer_norm(x)
         x = self.relu(self.input_layer(x))
-        x = self.relu(self.hidden(x))
+        x = self.hidden(x)
         x = self.output_layer(x)
         return x
 
-    def training_step(self, batch, batch_idx):
-        # training_step defines the train loop. It is independent of forward
+    def common_step(self, batch, split: str):
         x, y = batch
-        x, y = x.float(), y.float()
-        out = self(x)
-        loss = F.mse_loss(out, y)
-        return loss
-
-    def validation_step(self, batch, batch_idx):
-        loss = self.training_step(batch, batch_idx)
-        self.log('validation_loss', loss, on_epoch=True)
-        return loss
-
-    def test_step(self, batch, batch_idx):
-        x, y = batch
-        x, y = x.float(), y.float()
         out = self(x)
         loss = F.mse_loss(out, y)
         r2 = r2_score(out, y)
-        self.log('test_loss', loss, on_epoch=True)
-        self.log('r2_score', r2, on_epoch=True)
+        self.log(f"{split} loss", loss, on_epoch=True, batch_size=len(x))
+        self.log(f"{split} R2", r2, on_epoch=True, batch_size=len(x))
         return loss
 
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        return self(batch[0].float())
+    def training_step(self, batch, batch_idx):
+        return self.common_step(batch, "training")
+    
+    def validation_step(self, batch, batch_idx):
+        return self.common_step(batch, "validation")
+    
+    def test_step(self, batch, batch_idx):
+        return self.common_step(batch, "test")
 
     def configure_optimizers(self):
         optimizer = Adam(self.parameters(), lr=1e-3)
         return optimizer
 
 
-def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, label_dim, batch_size=64):
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=64, shuffle=True)
-    validation_loader = DataLoader(validation_dataset, batch_size=batch_size, num_workers=64, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=64, shuffle=False)
-    mlp = MLP(input_dim, 2048, label_dim)
-    # mlp = MLP.load_from_checkpoint("lightning_logs/version_10/checkpoints/epoch=9-step=1410.ckpt", input_size=50, hidden_size=128, output_size=1)
-    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=30, log_every_n_steps=10)
+def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, label_dim, batch_size=64, epochs = 30):
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=128, shuffle=True)
+    validation_loader = DataLoader(validation_dataset, batch_size=batch_size, num_workers=128, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=128, shuffle=False)
+    mlp = MLP_PL(input_dim, [512, 256, 256], label_dim)
+    logger = WandbLogger(dir=f"./logs/{train_dataset.__class__.__name__}/",
+                             project="UniversalGNNs",
+                             tags=["BASELINE", "MLP", train_dataset.__class__.__name__])
+    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=epochs, log_every_n_steps=100, logger=logger)
     trainer.fit(mlp, train_loader, validation_loader)
-    # trainer.test(mlp, validation_loader)
     return trainer.test(mlp, test_loader)
 
 
-datasets = [UberMovementDataset]
+datasets = [ClimARTDataset]
 
 scores = {}
 for dataset_class in datasets:
-    batch_size = 128
-    multisplit_dataset = MultiSplitDataset(dataset_class, test=False, normalize_full=False, use_normalized_coordinates=True)
-    train_dataset, val_dataset, _ = multisplit_dataset.get_splits()
+    batch_size = 2048
+    multisplit_dataset = MultiSplitDataset(dataset_class, normalize_full=False)
+    train_dataset, val_dataset, test_dataset = multisplit_dataset.get_splits()
 
     scores[dataset_class.__name__] = {}
-    if dataset_class == UberMovementDataset:
-        batch_size = 4096
-        test_dataset = val_dataset
-    else:
-        test_dataset = dataset_class(split="testing", normalize=True)
 
-    scores[dataset_class.__name__]["RF"] = RFRegressor(train_dataset.data, test_dataset.data)
+    # scores[dataset_class.__name__]["RF"] = RFRegressor(train_dataset.data, test_dataset.data)
     # scores[dataset_class.__name__]["GB"] = GradBoostRegressor(train_dataset.data, test_dataset.data)
     scores[dataset_class.__name__]["MLP"] = MLPRegressor(train_dataset, val_dataset, test_dataset, train_dataset.input_dim,
-                                                         train_dataset.label_dim, batch_size)
+                                                         train_dataset.label_dim, batch_size, 200)
 
 print(scores)
 with open("results_baselines.txt", "w") as f:
