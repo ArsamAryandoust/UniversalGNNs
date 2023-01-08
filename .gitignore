@@ -1,5 +1,3 @@
-data
-
 src/.ipynb_checkpoints
 __pycache__
 lightning_logs/

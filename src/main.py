@@ -117,7 +117,7 @@ def load_datasets(dataset_classes: list[type],
 
 def main(args):
     # load the datasets
-    dataset_classes = [ClimARTDataset]
+    dataset_classes = [UberMovementDataset]
     LATENT_DIM = 512
     loaders, autoencoders_dict, graphbuilders_dict, regressors_dict = load_datasets(dataset_classes, 128, 1000, LATENT_DIM)
     train_loader, val_loader, test_loader = loaders
