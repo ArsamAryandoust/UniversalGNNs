@@ -18,6 +18,8 @@ class ClimARTDataset(CheckedDataset):
                  sanitize=True):
         print("============================================================")
         print(f"Loading ClimART dataset on {split} split:")
+        self.edge_level = False
+        self.spatial_temporal_indeces = list(range(5))
         self.normalize = normalize
         self.NUM_COLUMNS = 1268
         self.NUM_INPUTS = 970
@@ -39,7 +41,7 @@ class ClimARTDataset(CheckedDataset):
                 raise RuntimeError(f"""The number of columns in the csv file 
                     is different from the expected: expected {self.NUM_COLUMNS}, got {len(frame.columns)}."""
                                    )
-            main_data_frame = pd.concat([main_data_frame, frame])
+            main_data_frame = pd.concat([main_data_frame, frame], ignore_index=True)
 
         X_frame = frame.iloc[:, :self.NUM_INPUTS]
         Y_frame = frame.iloc[:, self.NUM_INPUTS:self.NUM_COLUMNS]

@@ -5,21 +5,19 @@ import scipy
 
 class GraphBuilder:
 
-    def __init__(self, distance_function, params_indeces, connectivity, encoder, edge_level_batch=False, device="cpu"):
+    def __init__(self, distance_function, params_indeces, connectivity, encoder, edge_level_batch=False):
         self.distance_function = distance_function
         self.params_indeces = params_indeces
         self.connectivity = connectivity
         self.encoder = encoder
         self.edge_level_batch = edge_level_batch
-        self.device = device
     
     def compute_nodes_matrix(self, batch):
-        return self.encoder.forward_det(batch)
+        return self.encoder.get_latent(batch)
 
-
-    def compute_edges_matrices(self, batch):
-        params_indeces = torch.IntTensor(self.params_indeces)
-        distance_features = torch.index_select(batch, dim=1, index=params_indeces)
+    def compute_edges_matrices(self, batch, device):
+        distance_features_indeces = torch.IntTensor(self.params_indeces).to(device)
+        distance_features = torch.index_select(batch, dim=1, index=distance_features_indeces)
         distance_features = distance_features.cpu().detach().numpy()
         distances_matrix = scipy.spatial.distance.cdist(distance_features, distance_features, self.distance_function)
         min_distance, max_distance = distances_matrix.min(), distances_matrix.max()
@@ -29,7 +27,7 @@ class GraphBuilder:
         sparsity = 1 - self.connectivity
         quantile = np.quantile(scores_matrix, q=sparsity)
         scores_matrix = np.where(scores_matrix > quantile, scores_matrix, 0.)
-        scores_matrix = torch.from_numpy(scores_matrix).to(self.device)
+        scores_matrix = torch.from_numpy(scores_matrix).to(device)
         edges_indeces, edges_weights = torch_geometric.utils.dense_to_sparse(scores_matrix)
         return edges_indeces, edges_weights
 
@@ -38,15 +36,26 @@ class GraphBuilder:
             result = 0.
         else:
             result = 1 - x
-
         return result
 
     def compute_row_level_batch(self, batch):
-        raise NotImplementedError("Edge-level datasets have to be managed yet.")
+        distance_features_indeces_1 = torch.IntTensor(self.params_indeces[0][0])
+        distance_features__indeces_2 = torch.IntTensor(self.params_indeces[1][0])
+        node_features_indeces_1 = torch.IntTensor(self.params_indeces[0][1])
+        node_features_indeces_2 = torch.IntTensor(self.params_indeces[1][1])
+        distance_features_1 = torch.index_select(batch, dim=1, index=distance_features_indeces_1)
+        distance_features_2 = torch.index_select(batch, dim=1, index=distance_features__indeces_2)
+        node_features_1 = torch.index_select(batch, dim=1, index=node_features_indeces_1)
+        node_features_2 = torch.index_select(batch, dim=1, index=node_features_indeces_2)
+        row_level_batch_1 = torch.hstack((distance_features_1, node_features_1))
+        row_level_batch_2 = torch.hstack((distance_features_2, node_features_2))
+        row_level_batch = torch.vstack((row_level_batch_1, row_level_batch_2))
+        self.params_indeces = list(range(distance_features_indeces_1.shape[0]))
+        return row_level_batch
 
-    def compute_graph(self, batch):
+    def compute_graph(self, batch, device):
         if self.edge_level_batch:
             batch = self.compute_row_level_batch(batch)
         nodes_matrix = self.compute_nodes_matrix(batch)
-        edges_indeces, edges_weights = self.compute_edges_matrices(batch)
+        edges_indeces, edges_weights = self.compute_edges_matrices(batch, device)
         return nodes_matrix, edges_indeces, edges_weights
