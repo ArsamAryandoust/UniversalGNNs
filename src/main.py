@@ -69,7 +69,8 @@ def load_datasets(dataset_classes: list[type],
 
         # Load the autoencoder for the dataset and create a graphbuilder to assign to it
         dataloader = DataLoader(splits[0], batch_size=batch_size, shuffle=True, num_workers=128)
-        autoencoder = train_autoencoder(AutoEncoder, dataloader, load_data=LOAD_ENCODER, latent_dim=latent_dim)
+        val_dataloader = DataLoader(splits[1], batch_size=batch_size, shuffle=False, num_workers=128)
+        autoencoder = train_autoencoder(AutoEncoder, dataloader, val_dataloader, load_data=LOAD_ENCODER, latent_dim=latent_dim)
         # freeze the autoencoder layers
         autoencoder.requires_grad_(False)
         # create a GraphBuilder and assign it to all the splits

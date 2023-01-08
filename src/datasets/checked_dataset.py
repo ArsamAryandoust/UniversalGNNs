@@ -73,8 +73,8 @@ class CheckedDataset(ABC, Dataset):
         
         X_mean = X.mean(dim=0)
         X_std = X.std(dim=0)
-        Y_mean = Y.mean()
-        Y_std = Y.std()
+        Y_mean = Y.mean(dim=0)
+        Y_std = Y.std(dim=0)
 
         X_mean_nan = torch.count_nonzero(torch.isnan(X_mean))
         X_std_nan = torch.count_nonzero(torch.isnan(X_std))
@@ -91,7 +91,7 @@ class CheckedDataset(ABC, Dataset):
 
         return X_mean, X_std, Y_mean, Y_std
 
-    def _normalize_data(self) -> tuple[torch.Tensor, torch.Tensor, tuple.Tensor, tuple.Tensor]:
+    def _normalize_data(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Normalize the input data over features and labels across all samples and check that the mean/std are not nan
         """
