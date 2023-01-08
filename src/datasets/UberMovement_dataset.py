@@ -16,7 +16,7 @@ class UberMovementDataset(CheckedDataset):
 
     def __init__(self,
                  dataset_path: str
-                 | Path = "/TasksEnergyTransition/UberMovement/",
+                 | Path = "/EnergyTransitionTasks/UberMovement/",
                  split: str = "training",
                  use_region_centroids: bool = True,
                  use_normalized_coordinates: bool = True,
