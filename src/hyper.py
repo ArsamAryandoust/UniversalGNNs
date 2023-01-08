@@ -7,19 +7,22 @@ class HyperParameter:
     Bundles a bunch of hyper parameters.
     """
     
+    # choose which results to save
+    SAVE_BASELINE_RESULTS = True
+    
     # Choose which experiments to run
     RUN_MAIN_EXPERIMENTS = False
     RUN_BASELINE_EXPERIMENTS = True
     
     # Choose which baseline experiments to run
     RUN_BASELINE_RF = False
-    RUN_BASELINE_GB = False
+    RUN_BASELINE_GB = True
     RUN_BASELINE_MLP = False
     
     # Choose which dataset to consider
-    UBERMOVEMENT = False
+    UBERMOVEMENT = True
     CLIMART = False
-    BUILDINGELECTRICITY = True
+    BUILDINGELECTRICITY = False
     
     # model parameters
     LATENT_DIM = 512
@@ -28,6 +31,7 @@ class HyperParameter:
     MAX_EPOCHS = 30
     BATCH_SIZE_BASELINE = 2048
     EPOCHS_BASELINE = 20
+    
     
     # random seed
     SEED = 3

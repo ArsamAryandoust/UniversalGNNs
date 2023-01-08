@@ -181,11 +181,13 @@ def run_baseline_experiments(HYPER):
         scores[dataset_class.__name__] = {}
         if HYPER.RUN_BASELINE_RF:
             scores[dataset_class.__name__]["RF"] = baselines.RFRegressor(
+                HYPER,
                 train_dataset.data, 
                 test_dataset.data
             )
         if HYPER.RUN_BASELINE_GB:
             scores[dataset_class.__name__]["GB"] = baselines.GradBoostRegressor(
+                HYPER,
                 train_dataset.data, 
                 test_dataset.data
             )
@@ -204,19 +206,26 @@ def run_baseline_experiments(HYPER):
     print(scores)
     
     # save results
-    filename = results_baselines.txt
-    saving_path = HYPER.PATH_TO_RESULTS + filename
-    with open(saving_path, "w") as f:
-        f.write(str(scores))
+    if HYPER.SAVE_BASELINE_RESULTS:
+        filename = 'results_baselines.txt'
+        saving_path = HYPER.PATH_TO_RESULTS + filename
+        with open(saving_path, "w") as f:
+            f.write(str(scores))
     
+
 
 if __name__ == "__main__":
     
     # create hyper parameter instance
     HYPER = hyper.HyperParameter()
     
+    # run main experiments if chosen so
     if HYPER.RUN_MAIN_EXPERIMENTS:
         main(HYPER)
-        
+    
+    # run baseline experiments if chosen so
     if HYPER.RUN_BASELINE_EXPERIMENTS:
-        baselines.run_baseline_experiments(HYPER)
+        run_baseline_experiments(HYPER)
+        
+        
+        
