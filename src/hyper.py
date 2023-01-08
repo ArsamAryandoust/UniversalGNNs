@@ -15,13 +15,13 @@ class HyperParameter:
     RUN_BASELINE_EXPERIMENTS = True
     
     # Choose which baseline experiments to run
-    RUN_BASELINE_RF = False
+    RUN_BASELINE_RF = True
     RUN_BASELINE_GB = True
-    RUN_BASELINE_MLP = False
+    RUN_BASELINE_MLP = True
     
     # Choose which dataset to consider
-    UBERMOVEMENT = False
-    CLIMART = False
+    UBERMOVEMENT = True
+    CLIMART = True
     BUILDINGELECTRICITY = True
     
     # model parameters

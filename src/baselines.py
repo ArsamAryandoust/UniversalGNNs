@@ -120,4 +120,6 @@ def MLPRegressor(
         validation_loader
     )
     
-    return trainer.test(mlp, test_loader)
+    score = trainer.test(mlp, test_loader)
+    
+    return score
