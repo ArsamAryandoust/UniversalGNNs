@@ -1,5 +1,5 @@
 import os
-from datasets import ClimARTDataset, UberMovementDataset
+from datasets import ClimARTDataset, UberMovementDataset, BuildingElectricityDataset
 
 class HyperParameter:
 
@@ -20,9 +20,9 @@ class HyperParameter:
     RUN_BASELINE_MLP = False
     
     # Choose which dataset to consider
-    UBERMOVEMENT = True
+    UBERMOVEMENT = False
     CLIMART = False
-    BUILDINGELECTRICITY = False
+    BUILDINGELECTRICITY = True
     
     # model parameters
     LATENT_DIM = 512
@@ -37,7 +37,7 @@ class HyperParameter:
     SEED = 3
     
     # data paths
-    PATH_TO_RESULTS = 'resuls/'
+    PATH_TO_RESULTS = 'results/'
     
         
     def __init__(self):
@@ -48,6 +48,8 @@ class HyperParameter:
             self.DATASET_CLASS_LIST.append(UberMovementDataset)
         if self.CLIMART:
             self.DATASET_CLASS_LIST.append(ClimARTDataset)
+        if self.BUILDINGELECTRICITY:
+            self.DATASET_CLASS_LIST.append(BuildingElectricityDataset)
             
         # create result directories
         self.check_create_dir(self.PATH_TO_RESULTS)

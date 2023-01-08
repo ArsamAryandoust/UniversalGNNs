@@ -1,10 +1,5 @@
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.multioutput import RegressorChain
-<<<<<<< HEAD
-from datasets import ClimARTDataset, UberMovementDataset
-=======
-from datasets import MultiSplitDataset, ClimARTDataset, UberMovementDataset, BuildingElectricityDataset
->>>>>>> initial_release
 from models import MLP
 import time
 
@@ -22,7 +17,11 @@ from pytorch_lightning.loggers import WandbLogger
 #####################################
 #           Random Forests          #
 #####################################
-def RFRegressor(train_data, test_data):
+def RFRegressor(
+    HYPER, 
+    train_data, 
+    test_data
+):
     
     """ """
     
@@ -39,15 +38,17 @@ def RFRegressor(train_data, test_data):
     print("score:", score)
     
     return score
-    # ============== CLIMART ===================
-    # score: 0.41579297007803917 -> full dataset
-    # score: 0.8668907242816928  -> "inf" values set to 0
+
 
 
 #####################################
 #         Gradient Boosting         #
 #####################################
-def GradBoostRegressor(train_data, test_data):
+def GradBoostRegressor(
+    HYPER, 
+    train_data, 
+    test_data
+):
     
     """ """
     
@@ -64,14 +65,12 @@ def GradBoostRegressor(train_data, test_data):
     print("score:", score)
     
     return score
-    # ============== CLIMART ===================
-    # score: 0.4399313160686012 -> full dataset
+
 
 
 #####################################
 #               MLP                 #
 #####################################
-
 def MLPRegressor(
     train_dataset, 
     validation_dataset, 
@@ -122,12 +121,3 @@ def MLPRegressor(
     )
     
     return trainer.test(mlp, test_loader)
-
-
-
-# CLIMART:
-# {'RF': 0.8670452416481914, 'GB': 0.9635100152090146, 'MLP': [{'test_loss': 28312.16015625, 'r2_score': -122365976576.0}]}
-# {'ClimARTDataset': {'MLP': [{'test_loss': 21988.9375, 'r2_score': -3057724.0}]}}
-# UberMovement:
-# {'UberMovementDataset': {'MLP': [{'test_loss': 10136.76171875, 'r2_score': 0.5676587224006653}]}}
-# {'UberMovementDataset': {'RF': 0.5863605102531544}}
