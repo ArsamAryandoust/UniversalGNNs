@@ -1,4 +1,5 @@
-from datasets import MultiSplitDataset, MultiDataset, MultiDatasetBatchSampler, ClimARTDataset, UberMovementDataset
+from datasets import MultiSplitDataset, MultiDataset, MultiDatasetBatchSampler
+from datasets import ClimARTDataset, UberMovementDataset
 from models import AutoEncoder, VAE, UniversalGNN, MLP
 from GraphBuilder import GraphBuilder
 
@@ -11,10 +12,19 @@ from pytorch_lightning.loggers import WandbLogger
 
 from pathlib import Path
 
+import hyper
+import baselines
+
 # TODO: handle multiple configurations from command line arguments
 
 
-def train_autoencoder(encoder_class: type, train_loader: DataLoader, val_loader: DataLoader, load_data: bool = True, latent_dim: int = 512) -> nn.Module:
+def train_autoencoder(
+    encoder_class: type, 
+    train_loader: DataLoader, 
+    val_loader: DataLoader, 
+    load_data: bool = True, 
+    latent_dim: int = 512
+) -> nn.Module:
     """
     Trains a new AutoEncoder/VAE on the dataloader provided with the specified latent dimention.
 
@@ -43,9 +53,12 @@ def train_autoencoder(encoder_class: type, train_loader: DataLoader, val_loader:
     return autoencoder
 
 
-def load_datasets(dataset_classes: list[type],
-                  batch_size: int,
-                  num_batches_per_epoch: int = 1000, latent_dim=512) -> tuple[tuple[MultiDataset, MultiDataset, MultiDataset], dict, dict, dict]:
+def load_datasets(
+    dataset_classes: list[type],
+    batch_size: int,
+    num_batches_per_epoch: int = 1000, 
+    latent_dim=512
+) -> tuple[tuple[MultiDataset, MultiDataset, MultiDataset], dict, dict, dict]:
     """
     Loads the datasets specified from dataset_classes, together with the autoencoder(s) needed to feed the information
     into the GNN and the final regressor. 
@@ -115,22 +128,95 @@ def load_datasets(dataset_classes: list[type],
     return (train_loader, val_loader, test_loader), autoencoders_dict, graphbuilders_dict, regressors_dict
 
 
-def main(args):
+def main(HYPER):
+
+    """ """
+    
     # load the datasets
-    dataset_classes = [UberMovementDataset]
-    LATENT_DIM = 512
-    loaders, autoencoders_dict, graphbuilders_dict, regressors_dict = load_datasets(dataset_classes, 128, 1000, LATENT_DIM)
+    (
+        loaders, 
+        autoencoders_dict, 
+        graphbuilders_dict, 
+        regressors_dict 
+    )= load_datasets(HYPER.DATASET_CLASS_LIST, 128, 1000, HYPER.LATENT_DIM)
     train_loader, val_loader, test_loader = loaders
-    model = UniversalGNN(LATENT_DIM, LATENT_DIM, LATENT_DIM, autoencoders_dict, graphbuilders_dict, regressors_dict)
+    model = UniversalGNN(
+        HYPER.LATENT_DIM, 
+        HYPER.LATENT_DIM, 
+        HYPER.LATENT_DIM, 
+        autoencoders_dict, 
+        graphbuilders_dict, 
+        regressors_dict
+    )
+    
     # train the GNN
-    datasets_str = [d.__name__ for d in dataset_classes]
-    logger = WandbLogger(dir="./logs/UniversalGNN/",
-                             project="UniversalGNNs",
-                             tags=["UNIVERSALGNN", str(LATENT_DIM)] + datasets_str)
-    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=30, log_every_n_steps=1, logger=logger)
+    datasets_str = [d.__name__ for d in HYPER.DATASET_CLASS_LIST]
+    logger = WandbLogger(
+        dir="./logs/UniversalGNN/",
+        project="UniversalGNNs",
+        tags=["UNIVERSALGNN", str(HYPER.LATENT_DIM)] + datasets_str
+    )
+    trainer = pl.Trainer(
+        devices=1, 
+        accelerator="gpu", 
+        max_epochs=HYPER.MAX_EPOCHS, 
+        log_every_n_steps=1, 
+        logger=logger
+    )
     trainer.fit(model, train_loader, val_loader)
     trainer.test(model, test_loader)
 
 
+def run_baseline_experiments(HYPER):
+    
+    """ """
+
+    device = torch.device("cuda")
+    
+    scores = {}
+    for dataset_class in HYPER.DATASET_CLASS_LIST:
+        multisplit_dataset = MultiSplitDataset(dataset_class)
+        train_dataset, val_dataset, test_dataset = multisplit_dataset.get_splits()
+
+        scores[dataset_class.__name__] = {}
+        if HYPER.RUN_BASELINE_RF:
+            scores[dataset_class.__name__]["RF"] = baselines.RFRegressor(
+                train_dataset.data, 
+                test_dataset.data
+            )
+        if HYPER.RUN_BASELINE_GB:
+            scores[dataset_class.__name__]["GB"] = baselines.GradBoostRegressor(
+                train_dataset.data, 
+                test_dataset.data
+            )
+        if HYPER.RUN_BASELINE_MLP:
+            scores[dataset_class.__name__]["MLP"] = baselines.MLPRegressor(
+                train_dataset, 
+                val_dataset, 
+                test_dataset, 
+                train_dataset.input_dim,
+                train_dataset.label_dim, 
+                HYPER.BATCH_SIZE_BASELINE, 
+                HYPER.EPOCHS_BASELINE
+            )
+
+    # show results
+    print(scores)
+    
+    # save results
+    filename = results_baselines.txt
+    saving_path = HYPER.PATH_TO_RESULTS + filename
+    with open(saving_path, "w") as f:
+        f.write(str(scores))
+    
+
 if __name__ == "__main__":
-    main(None)
+    
+    # create hyper parameter instance
+    HYPER = hyper.HyperParameter()
+    
+    if HYPER.RUN_MAIN_EXPERIMENTS:
+        main(HYPER)
+        
+    if HYPER.RUN_BASELINE_EXPERIMENTS:
+        baselines.run_baseline_experiments(HYPER)

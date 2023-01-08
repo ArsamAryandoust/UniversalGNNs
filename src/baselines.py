@@ -6,6 +6,8 @@ import time
 
 SEED = 42
 
+    
+    
 
 #####################################
 #           Random Forests          #
@@ -53,7 +55,6 @@ import torch.nn.functional as F
 from torchmetrics.functional import r2_score
 from pytorch_lightning.loggers import WandbLogger
 
-device = torch.device("cuda")
 
 def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, label_dim, batch_size=64, epochs = 30):
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=128, shuffle=True)
@@ -67,42 +68,8 @@ def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, lab
     trainer.fit(mlp, train_loader, validation_loader)
     return trainer.test(mlp, test_loader)
 
-datasets = [ClimARTDataset]
 
-scores = {}
-for dataset_class in datasets:
-    batch_size = 2048
-    multisplit_dataset = MultiSplitDataset(dataset_class)
-    train_dataset, val_dataset, test_dataset = multisplit_dataset.get_splits()
 
-    scores[dataset_class.__name__] = {}
-
-    # scores[dataset_class.__name__]["RF"] = RFRegressor(train_dataset.data, test_dataset.data)
-    # scores[dataset_class.__name__]["GB"] = GradBoostRegressor(train_dataset.data, test_dataset.data)
-    scores[dataset_class.__name__]["MLP"] = MLPRegressor(train_dataset, val_dataset, test_dataset, train_dataset.input_dim,
-                                                       train_dataset.label_dim, batch_size, 20)
-
-    # print("TRAIN")
-    # print("X mean:", train_dataset.data[0].mean())
-    # print("Y mean:", train_dataset.data[1].mean())
-    # print("X std:", train_dataset.data[0].std())
-    # print("Y std:", train_dataset.data[1].std())
-
-    # print("VALIDATION")
-    # print("X mean:", val_dataset.data[0].mean())
-    # print("Y mean:", val_dataset.data[1].mean())
-    # print("X std:", val_dataset.data[0].std())
-    # print("Y std:", val_dataset.data[1].std())
-
-    # print("TEST")
-    # print("X mean:", test_dataset.data[0].mean())
-    # print("Y mean:", test_dataset.data[1].mean())
-    # print("X std:", test_dataset.data[0].std())
-    # print("Y std:", test_dataset.data[1].std())
-
-print(scores)
-with open("results_baselines.txt", "w") as f:
-    f.write(str(scores))
 
 # CLIMART:
 # {'RF': 0.8670452416481914, 'GB': 0.9635100152090146, 'MLP': [{'test_loss': 28312.16015625, 'r2_score': -122365976576.0}]}
