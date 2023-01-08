@@ -11,8 +11,8 @@ class HyperParameter:
     SAVE_BASELINE_RESULTS = True
     
     # Choose which experiments to run
-    RUN_MAIN_EXPERIMENTS = False
-    RUN_BASELINE_EXPERIMENTS = True
+    RUN_MAIN_EXPERIMENTS = True
+    RUN_BASELINE_EXPERIMENTS = False
     
     # Choose which baseline experiments to run
     RUN_BASELINE_RF = True
@@ -32,7 +32,6 @@ class HyperParameter:
     BATCH_SIZE_BASELINE = 2048
     EPOCHS_BASELINE = 20
     
-    
     # random seed
     SEED = 3
     
@@ -42,7 +41,9 @@ class HyperParameter:
         
     def __init__(self):
     
+        """ """
         
+        # add datasets we cant to consider to list
         self.DATASET_CLASS_LIST = []
         if self.UBERMOVEMENT:
             self.DATASET_CLASS_LIST.append(UberMovementDataset)
@@ -51,7 +52,7 @@ class HyperParameter:
         if self.BUILDINGELECTRICITY:
             self.DATASET_CLASS_LIST.append(BuildingElectricityDataset)
             
-        # create result directories
+        # create result directories here
         self.check_create_dir(self.PATH_TO_RESULTS)
         
         
