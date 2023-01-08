@@ -1,6 +1,6 @@
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.multioutput import RegressorChain
-from datasets import ClimARTDataset, UberMovementDataset, MultiSplitDataset
+from datasets import MultiSplitDataset, ClimARTDataset, UberMovementDataset, BuildingElectricityDataset
 from models import MLP
 import time
 
@@ -55,19 +55,19 @@ from pytorch_lightning.loggers import WandbLogger
 
 device = torch.device("cuda")
 
-def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, label_dim, batch_size=64, epochs = 30):
+def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, label_dim, batch_size=64, epochs = 30, dropout=0.2):
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=128, shuffle=True)
     validation_loader = DataLoader(validation_dataset, batch_size=batch_size, num_workers=128, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=128, shuffle=False)
-    mlp = MLP(input_dim, [512, 256, 256], label_dim)
+    mlp = MLP(input_dim, [512, 256, 256], label_dim, dropout_prob=dropout)
     logger = WandbLogger(dir=f"./logs/{train_dataset.__class__.__name__}/",
                              project="UniversalGNNs",
-                             tags=["BASELINE", "MLP", train_dataset.__class__.__name__])
-    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=epochs, log_every_n_steps=100, logger=logger)
+                             tags=["BASELINE", "MLP", train_dataset.__class__.__name__, f"DROPOUT_{dropout}"])
+    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=epochs, log_every_n_steps=20, logger=logger)
     trainer.fit(mlp, train_loader, validation_loader)
     return trainer.test(mlp, test_loader)
 
-datasets = [ClimARTDataset]
+datasets = [BuildingElectricityDataset]
 
 scores = {}
 for dataset_class in datasets:
@@ -80,7 +80,7 @@ for dataset_class in datasets:
     # scores[dataset_class.__name__]["RF"] = RFRegressor(train_dataset.data, test_dataset.data)
     # scores[dataset_class.__name__]["GB"] = GradBoostRegressor(train_dataset.data, test_dataset.data)
     scores[dataset_class.__name__]["MLP"] = MLPRegressor(train_dataset, val_dataset, test_dataset, train_dataset.input_dim,
-                                                       train_dataset.label_dim, batch_size, 20)
+                                                       train_dataset.label_dim, batch_size, 50, 0)
 
     # print("TRAIN")
     # print("X mean:", train_dataset.data[0].mean())
