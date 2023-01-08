@@ -12,7 +12,7 @@ class ClimARTDataset(CheckedDataset):
     """
 
     def __init__(self,
-                 dataset_path: str | Path = "/TasksEnergyTransition/ClimART/",
+                 dataset_path: str | Path = "/TasksEnergyTransition/ClimART/pristine/",
                  split: str = "training",
                  normalize=False,
                  sanitize=True):
@@ -43,8 +43,8 @@ class ClimARTDataset(CheckedDataset):
                                    )
             main_data_frame = pd.concat([main_data_frame, frame], ignore_index=True)
 
-        X_frame = frame.iloc[:, :self.NUM_INPUTS]
-        Y_frame = frame.iloc[:, self.NUM_INPUTS:self.NUM_COLUMNS]
+        X_frame = main_data_frame.iloc[:, :self.NUM_INPUTS]
+        Y_frame = main_data_frame.iloc[:, self.NUM_INPUTS:self.NUM_COLUMNS]
         X = X_frame.to_numpy()
         Y = Y_frame.to_numpy()
 

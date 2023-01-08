@@ -9,16 +9,22 @@ from torchmetrics.functional import r2_score
 
 class MLP(nn.Module):
 
-    def __init__(self, input_size, hidden_size, output_size):
+    def __init__(self, input_size: int, hidden_sizes: list[int], output_size: int):
         super().__init__()
-        self.input_layer = nn.Linear(input_size, hidden_size)
-        self.hidden = nn.Linear(hidden_size, hidden_size)
-        self.output_layer = nn.Linear(hidden_size, output_size)
+        print(f"MLP with: layers of size: {input_size} -> {hidden_sizes} -> {output_size}.")
+        assert len(hidden_sizes) > 0, "MLP must have at least 1 hidden layer!"
+        self.input_layer = nn.Linear(input_size, hidden_sizes[0])
+        self.hidden = nn.Sequential()
+        for i in range(len(hidden_sizes) - 1):
+            self.hidden.append(nn.Linear(hidden_sizes[i], hidden_sizes[i+1]))
+            self.hidden.append(nn.ReLU())
+
+        self.output_layer = nn.Linear(hidden_sizes[-1], output_size)
         self.relu = nn.ReLU()
 
     def forward(self, x):
         x = self.relu(self.input_layer(x))
-        x = self.relu(self.hidden(x))
+        x = self.hidden(x)
         x = self.output_layer(x)
         return x
 
@@ -182,6 +188,7 @@ class GNN(nn.Module):
 class UniversalGNN(pl.LightningModule):
     def __init__(self, latent_dim, hidden_dim, out_dim, autoencoders_dict, graphbuilders_dict, regressors_dict):
         super().__init__()
+        self.save_hyperparameters()
         self.gnn = GNN(latent_dim, hidden_dim, out_dim)
         self.autoencoders = nn.ModuleDict(autoencoders_dict)
         self.graphbuilders = graphbuilders_dict
