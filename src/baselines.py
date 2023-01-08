@@ -1,6 +1,10 @@
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.multioutput import RegressorChain
+<<<<<<< HEAD
 from datasets import ClimARTDataset, UberMovementDataset
+=======
+from datasets import MultiSplitDataset, ClimARTDataset, UberMovementDataset, BuildingElectricityDataset
+>>>>>>> initial_release
 from models import MLP
 import time
 

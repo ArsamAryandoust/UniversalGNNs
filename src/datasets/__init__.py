@@ -4,3 +4,4 @@ from datasets.multi_dataset import MultiDataset, MultiDatasetBatchSampler
 
 from datasets.ClimART_dataset import ClimARTDataset
 from datasets.UberMovement_dataset import UberMovementDataset
+from datasets.BuildingElectricity_dataset import BuildingElectricityDataset
