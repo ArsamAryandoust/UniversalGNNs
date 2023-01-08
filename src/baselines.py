@@ -55,56 +55,11 @@ from pytorch_lightning.loggers import WandbLogger
 
 device = torch.device("cuda")
 
-
-class MLP_PL(MLP, pl.LightningModule):
-
-    def __init__(self, input_size: int, hidden_sizes: list[int], output_size: int):
-        super().__init__(input_size, hidden_sizes, output_size)
-        print(f"MLP with: layers of size: {input_size} -> {hidden_sizes} -> {output_size}.")
-        assert len(hidden_sizes) > 0, "MLP must have at least 1 hidden layer!"
-        self.input_layer = nn.Linear(input_size, hidden_sizes[0])
-        self.hidden = nn.Sequential()
-        for i in range(len(hidden_sizes) - 1):
-            self.hidden.append(nn.Linear(hidden_sizes[i], hidden_sizes[i+1]))
-            self.hidden.append(nn.ReLU())
-
-        self.output_layer = nn.Linear(hidden_sizes[-1], output_size)
-        self.relu = nn.ReLU()
-
-    def forward(self, x):
-        x = self.relu(self.input_layer(x))
-        x = self.hidden(x)
-        x = self.output_layer(x)
-        return x
-
-    def common_step(self, batch, split: str):
-        x, y = batch
-        out = self(x)
-        loss = F.mse_loss(out, y)
-        r2 = r2_score(out, y)
-        self.log(f"{split} loss", loss, on_epoch=True, batch_size=len(x))
-        self.log(f"{split} R2", r2, on_epoch=True, batch_size=len(x))
-        return loss
-
-    def training_step(self, batch, batch_idx):
-        return self.common_step(batch, "training")
-    
-    def validation_step(self, batch, batch_idx):
-        return self.common_step(batch, "validation")
-    
-    def test_step(self, batch, batch_idx):
-        return self.common_step(batch, "test")
-
-    def configure_optimizers(self):
-        optimizer = Adam(self.parameters(), lr=1e-3)
-        return optimizer
-
-
 def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, label_dim, batch_size=64, epochs = 30):
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=128, shuffle=True)
     validation_loader = DataLoader(validation_dataset, batch_size=batch_size, num_workers=128, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=128, shuffle=False)
-    mlp = MLP_PL(input_dim, [512, 256, 256], label_dim)
+    mlp = MLP(input_dim, [512, 256, 256], label_dim)
     logger = WandbLogger(dir=f"./logs/{train_dataset.__class__.__name__}/",
                              project="UniversalGNNs",
                              tags=["BASELINE", "MLP", train_dataset.__class__.__name__])
@@ -112,13 +67,12 @@ def MLPRegressor(train_dataset, validation_dataset, test_dataset, input_dim, lab
     trainer.fit(mlp, train_loader, validation_loader)
     return trainer.test(mlp, test_loader)
 
-
 datasets = [ClimARTDataset]
 
 scores = {}
 for dataset_class in datasets:
     batch_size = 2048
-    multisplit_dataset = MultiSplitDataset(dataset_class, normalize_full=False)
+    multisplit_dataset = MultiSplitDataset(dataset_class)
     train_dataset, val_dataset, test_dataset = multisplit_dataset.get_splits()
 
     scores[dataset_class.__name__] = {}
@@ -126,7 +80,25 @@ for dataset_class in datasets:
     # scores[dataset_class.__name__]["RF"] = RFRegressor(train_dataset.data, test_dataset.data)
     # scores[dataset_class.__name__]["GB"] = GradBoostRegressor(train_dataset.data, test_dataset.data)
     scores[dataset_class.__name__]["MLP"] = MLPRegressor(train_dataset, val_dataset, test_dataset, train_dataset.input_dim,
-                                                         train_dataset.label_dim, batch_size, 200)
+                                                       train_dataset.label_dim, batch_size, 20)
+
+    # print("TRAIN")
+    # print("X mean:", train_dataset.data[0].mean())
+    # print("Y mean:", train_dataset.data[1].mean())
+    # print("X std:", train_dataset.data[0].std())
+    # print("Y std:", train_dataset.data[1].std())
+
+    # print("VALIDATION")
+    # print("X mean:", val_dataset.data[0].mean())
+    # print("Y mean:", val_dataset.data[1].mean())
+    # print("X std:", val_dataset.data[0].std())
+    # print("Y std:", val_dataset.data[1].std())
+
+    # print("TEST")
+    # print("X mean:", test_dataset.data[0].mean())
+    # print("Y mean:", test_dataset.data[1].mean())
+    # print("X std:", test_dataset.data[0].std())
+    # print("Y std:", test_dataset.data[1].std())
 
 print(scores)
 with open("results_baselines.txt", "w") as f:

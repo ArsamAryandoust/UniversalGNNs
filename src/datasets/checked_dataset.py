@@ -65,32 +65,41 @@ class CheckedDataset(ABC, Dataset):
 
         self.data = X, Y
 
-    def _get_normalization_values(self, data) -> tuple[torch.Tensor, torch.Tensor]:
+    def _get_normalization_values(self, data) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
         Calculate mean and std for normalization and check for nans or std==0.
         """
-        mean = data.mean(dim=0)
-        std = data.std(dim=0)
+        X, Y = data
+        
+        X_mean = X.mean(dim=0)
+        X_std = X.std(dim=0)
+        Y_mean = Y.mean(dim=0)
+        Y_std = Y.std(dim=0)
 
-        mean_nan = torch.count_nonzero(torch.isnan(mean))
-        std_nan = torch.count_nonzero(torch.isnan(std))
-        std_zero = torch.count_nonzero(std == 0)
-        assert mean_nan == 0,   "Error: nan values in X mean when trying to normalize!"
-        assert std_nan == 0,    "Error: nan values in X std when trying to normalize!"
-        assert std_zero == 0,   "Error: 0 values in X std when trying to normalize!"
+        X_mean_nan = torch.count_nonzero(torch.isnan(X_mean))
+        X_std_nan = torch.count_nonzero(torch.isnan(X_std))
+        X_std_zero = torch.count_nonzero(X_std == 0)
+        Y_mean_nan = torch.count_nonzero(torch.isnan(Y_mean))
+        Y_std_nan = torch.count_nonzero(torch.isnan(Y_std))
+        Y_std_zero = torch.count_nonzero(Y_std == 0)
+        assert X_mean_nan == 0,   "Error: nan values in X mean when trying to normalize!"
+        assert X_std_nan == 0,    "Error: nan values in X std when trying to normalize!"
+        assert X_std_zero == 0,   "Error: 0 values in X std when trying to normalize!"
+        assert Y_mean_nan == 0,   "Error: nan values in Y mean when trying to normalize!"
+        assert Y_std_nan == 0,    "Error: nan values in Y std when trying to normalize!"
+        assert Y_std_zero == 0,   "Error: 0 values in Y std when trying to normalize!"
 
-        return mean, std
+        return X_mean, X_std, Y_mean, Y_std
 
-    def _normalize_data(self) -> tuple[torch.Tensor, torch.Tensor]:
+    def _normalize_data(self) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         """
-        Normalize the input data over features across all samples and check that the mean/std are not nan
+        Normalize the input data over features and labels across all samples and check that the mean/std are not nan
         """
-        X, Y = self.data
-
-        mean, std = self._get_normalization_values(X)
-        X = (X - mean) / std
+        X_mean, X_std, Y_mean, Y_std = self._get_normalization_values(self.data)
+        X = (X - X_mean) / X_std
+        Y = (Y - Y_mean) / Y_std
         self.data = X, Y
-        return mean, std
+        return X_mean, X_std, Y_mean, Y_std
 
     def _sanity_check_data(self):
         """
