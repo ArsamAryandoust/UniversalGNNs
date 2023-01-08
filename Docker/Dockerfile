@@ -15,5 +15,6 @@ RUN pip3 install pytorch-lightning
 RUN pip3 install pyg-lib torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.13.0+cu117.html
 RUN pip3 install matplotlib
 ENV PATH="${PATH}:/UniversalGNNs/src:/UniversalGNNs/src/datasets"
+RUN pip3 install wandb
 
 WORKDIR /UniversalGNNs
