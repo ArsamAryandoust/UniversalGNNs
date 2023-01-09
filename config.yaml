@@ -1,0 +1,37 @@
+baselines:
+    seed: 42
+    rf_num_estimators: 128
+    mlp_batch_size: 1024
+    mlp_epochs: 50
+    results_path: "/UniversalGNNs/results/"
+
+encoders:
+    encoder_class: "AutoEncoder"
+    save_path: "/UniversalGNNs/checkpoints/encoders/"
+    batch_size: 1024
+    max_epochs: 50
+    max_steps: 100_000
+    latent_dim: 512
+    load_checkpoint: true
+
+graphbuilders:
+    connectivity: 0.5
+    distance_function: "euclidean"
+
+regressors:
+    latent_dim: 512
+
+train_single:
+    latent_dim: 512
+    batch_size: 1024
+    epochs: 1
+    drop_last: true
+    n_layers: 4
+
+train_universal:
+    latent_dim: 512
+    batch_size: 1024
+    batches_per_epoch: 1000
+    drop_last: true
+    epochs: 1
+    n_layers: 4

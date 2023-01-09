@@ -18,5 +18,3 @@ ENV PATH="${PATH}:/UniversalGNNs/src:/UniversalGNNs/src/datasets"
 RUN pip3 install wandb
 
 WORKDIR /UniversalGNNs
-
-CMD python3 src/main.py

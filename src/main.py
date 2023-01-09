@@ -1,328 +1,74 @@
-from datasets import MultiSplitDataset, MultiDataset, MultiDatasetBatchSampler
-from models import AutoEncoder, VAE, UniversalGNN, MLP
-from GraphBuilder import GraphBuilder
+import argparse
+from train import train_single, train_universal, train_baselines
+from loader import load_datasets, load_multidatasets, load_encoders, load_graphbuilders, load_regressors
+import yaml
 
-import wandb
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-import pytorch_lightning as pl
-from pytorch_lightning.loggers import WandbLogger
-
-from pathlib import Path
-
-import hyper
-import baselines
-
-
-def train_autoencoder(
-    encoder_class: type, 
-    train_loader: DataLoader, 
-    val_loader: DataLoader, 
-    load_data: bool = True, 
-    latent_dim: int = 512
-) -> nn.Module:
-
+def parse_arguments() -> argparse.Namespace:
     """
-    Trains a new AutoEncoder/VAE on the dataloader provided with the specified 
-    latent dimention.
-
-    If a savefile for the same configuration is present and load_data is set to 
-    True (default), it loads the saved weights from the savefile.
+    Parses the command line arguments passed to the program
     """
-    
-    autoencoder = encoder_class(
-        train_loader.dataset.input_dim, 
-        latent_dim
-    )
-    dataset_name = train_loader.dataset.__class__.__name__
-    encoder_name = encoder_class.__name__
-    savefile_path = (
-        Path(f"/UniversalGNNs/checkpoints/encoders/{dataset_name}") 
-        / f"{encoder_name}_{latent_dim}.pt"
-    )
-    
-    if savefile_path.exists() and load_data:
-        autoencoder.load_state_dict(torch.load(savefile_path))
-        print("Loaded autoencoder checkpoint in: ", savefile_path)
+    parser = argparse.ArgumentParser(prog="UniversalGNNs",
+                                     description="""Train models on 
+                        ClimART, UberMovement and/or BuildingElectricity datasets.
+                        
+                        Can train baselines such as Random forests and MLPs or the main model which consists on
+                        a universal GNN that uses an encoder to get a common dimentional representation of the 
+                        data and a regressor to solve the problems.
+
+                        First specify the dataset(s) to use, then the experiments to run on them.
+                        """)
+    # datasets
+    parser.add_argument("-climart", help="add the ClimART dataset", action="store_true")
+    parser.add_argument("-uber", help="add the UberMovement dataset", action="store_true")
+    parser.add_argument("-BE", help="add the BuildingElectricity dataset", action="store_true")
+
+    # models
+    parser.add_argument("--RF", help="Train a Random Forest on the specified datasets.", action="store_true")
+    parser.add_argument("--GB", help="Train a Gradient Boosting model on the specified datasets.", action="store_true")
+    parser.add_argument("--MLP", help="Train an MLP on the specified datasets.", action="store_true")
+    parser.add_argument("--train_single", help="Train the datasets on the UniversalGNN model one at a time.", action="store_true")
+    parser.add_argument("--train_universal",
+                        help="Train the datasets on the UniversalGNN models all together.",
+                        action="store_true")
+
+    args = parser.parse_args()
+
+    # do some checks for  validity of args
+    if not (args.climart or args.uber or args.BE):
+        print("Must select at least one dataset!")
+        exit(1)
+    if args.RF or args.GB or args.MLP:
+        args.baselines = True
     else:
-        print("Training new autoencoder and saving in: ", savefile_path)
-        savefile_path.parent.mkdir(parents=True, exist_ok=True)
-        logger = WandbLogger(
-            dir=f"./logs/{train_loader.dataset.__class__.__name__}/",
-            project="UniversalGNNs",
-            tags=["ENCODER", train_loader.dataset.__class__.__name__,
-            str(latent_dim)]
-        )
-        trainer = pl.Trainer(
-            devices=1, 
-            accelerator="gpu", 
-            max_epochs=30, 
-            log_every_n_steps=10, 
-            logger=logger, 
-            max_steps=100_000
-        )
-        trainer.fit(
-            autoencoder, 
-            train_loader, 
-            val_loader
-        )
-        wandb.finish()
-        torch.save(
-            autoencoder.state_dict(), 
-            savefile_path
-        )
+        args.baselines = False
 
-    return autoencoder
+    if not (args.baselines or args.train_single or args.train_universal):
+        print("Must select one model to train!")
+        exit(1)
 
-
-def load_datasets(
-    dataset_classes: list[type],
-    batch_size: int,
-    num_batches_per_epoch: int = 1000, 
-    latent_dim=512
-) -> tuple[tuple[MultiDataset, MultiDataset, MultiDataset], dict, dict, dict]:
-
-    """
-    Loads the datasets specified from dataset_classes, together with the autoencoder(s) 
-    needed to feed the information into the GNN and the final regressor. Returns 
-    the train, validation and test dataloaders, together with the autoencoders, 
-    GraphBuilders and regressors. 
-    
-    return: ((train_loader, val_loader, test_loader), autoencoders_dict, 
-    graphbuilders_dict, regressors_dict)
-
-    All the dicts are of the form dict[dataset_name] = value, 
-    where dataset_name == dataset.__name__
-    """
-    
-    LOAD_ENCODER = True
-    GRAPH_CONNECTIVITY = 0.5
-    train_datasets = []
-    val_datasets = []
-    test_datasets = []
-    autoencoders_dict = {}
-    graphbuilders_dict = {}
-    regressors_dict = {}
-    
-    for dataset_class in dataset_classes:
-        dataset = MultiSplitDataset(dataset_class)
-        splits = dataset.get_splits()
-
-        # Load the autoencoder for the dataset and create a graphbuilder to assign to it
-        dataloader = DataLoader(
-            splits[0], 
-            batch_size=batch_size, 
-            shuffle=True, 
-            num_workers=128
-        )
-        val_dataloader = DataLoader(
-            splits[1], 
-            batch_size=batch_size, 
-            shuffle=False, 
-            num_workers=128
-        )
-        autoencoder = train_autoencoder(
-            AutoEncoder, 
-            dataloader, 
-            val_dataloader, 
-            load_data=LOAD_ENCODER, 
-            latent_dim=latent_dim
-        )
-        # freeze the autoencoder layers
-        autoencoder.requires_grad_(False)
-        # create a GraphBuilder and assign it to all the splits
-        graph_builder = GraphBuilder(
-            distance_function="euclidean",
-            params_indeces=splits[0].spatial_temporal_indeces,
-            connectivity=GRAPH_CONNECTIVITY,
-            encoder=autoencoder,
-            edge_level_batch=splits[0].edge_level
-        )
-        for split in splits:
-            split.graph_builder = graph_builder
-
-        # create a regressor and assign it to every split
-        regr_input_dims = latent_dim
-        
-        # if the dataset is edge level, the out features from the GNN are the
-        # concatenation of the features of the 2 nodes.
-        if splits[0].edge_level == True:
-            regr_input_dims *= 2
-        
-        regr_hidden_dims = (regr_input_dims + splits[0].label_dim) // 2
-        regressor = MLP(regr_input_dims, [regr_hidden_dims], splits[0].label_dim)
-        
-        for split in splits:
-            split.regressor = regressor
-
-        train_datasets.append(splits[0])
-        val_datasets.append(splits[1])
-        test_datasets.append(splits[2])
-
-        autoencoders_dict[dataset_class.__name__] = autoencoder
-        graphbuilders_dict[dataset_class.__name__] = graph_builder
-        regressors_dict[dataset_class.__name__] = regressor
-
-    train_dataset = MultiDataset(train_datasets)
-    val_dataset = MultiDataset(val_datasets)
-    test_dataset = MultiDataset(test_datasets)
-
-    train_sampler = MultiDatasetBatchSampler(
-        train_dataset, 
-        batch_size, 
-        num_batches_per_epoch, 
-        drop_last=True
-    )
-    val_sampler = MultiDatasetBatchSampler(
-        val_dataset, 
-        batch_size, 
-        sequential=True, 
-        drop_last=True
-    )
-    test_sampler = MultiDatasetBatchSampler(
-        test_dataset, 
-        batch_size, 
-        sequential=True, 
-        drop_last=True
-    )
-
-    train_loader = DataLoader(
-        train_dataset, 
-        batch_sampler=train_sampler, 
-        num_workers=0, 
-        collate_fn=train_dataset.collate_fn
-    )
-    val_loader = DataLoader(
-        val_dataset, 
-        batch_sampler=val_sampler, 
-        num_workers=0, 
-        collate_fn=val_dataset.collate_fn
-    )
-    test_loader = DataLoader(
-        test_dataset, 
-        batch_sampler=test_sampler, 
-        num_workers=0, 
-        collate_fn=test_dataset.collate_fn
-    )
-    
-    return_value = (
-        (train_loader, val_loader, test_loader), 
-        autoencoders_dict, 
-        graphbuilders_dict, 
-        regressors_dict
-    )
-
-    return return_value
-
-
-def main(HYPER):
-
-    """ """
-    
-    # load the datasets
-    (
-        loaders, 
-        autoencoders_dict, 
-        graphbuilders_dict, 
-        regressors_dict 
-    ) = load_datasets(
-        HYPER.DATASET_CLASS_LIST,
-        HYPER.BATCH_SIZE, 
-        HYPER.NUM_BATCHES_PER_EPOCH, 
-        HYPER.LATENT_DIM
-    )
-    train_loader, val_loader, test_loader = loaders
-    
-    # create GNN
-    model = UniversalGNN(
-        HYPER.LATENT_DIM, 
-        HYPER.LATENT_DIM, 
-        HYPER.LATENT_DIM, 
-        autoencoders_dict, 
-        graphbuilders_dict, 
-        regressors_dict
-    )
-    
-    # train the GNN
-    datasets_str = [d.__name__ for d in HYPER.DATASET_CLASS_LIST]
-    logger = WandbLogger(
-        dir="./logs/UniversalGNN/",
-        project="UniversalGNNs",
-        tags=["UNIVERSALGNN", str(HYPER.LATENT_DIM)] + datasets_str
-    )
-    trainer = pl.Trainer(
-        devices=1, 
-        accelerator="gpu", 
-        max_epochs=HYPER.MAX_EPOCHS, 
-        log_every_n_steps=1, 
-        logger=logger
-    )
-    trainer.fit(model, train_loader, val_loader)
-    trainer.test(model, test_loader)
-
-
-def run_baseline_experiments(HYPER):
-    
-    """ """
-
-    for dataset_class in HYPER.DATASET_CLASS_LIST:
-        multisplit_dataset = MultiSplitDataset(dataset_class)
-        train_dataset, val_dataset, test_dataset = multisplit_dataset.get_splits()
-
-        if HYPER.RUN_BASELINE_RF:
-            score = baselines.RFRegressor(
-                HYPER,
-                train_dataset.data, 
-                test_dataset.data
-            )
-            save_baseline_results(HYPER, dataset_class.__name__, 'RF', score)
-            
-        if HYPER.RUN_BASELINE_GB:
-            score = baselines.GradBoostRegressor(
-                HYPER,
-                train_dataset.data, 
-                test_dataset.data
-            )
-            save_baseline_results(HYPER, dataset_class.__name__, 'GB', score)
-            
-        if HYPER.RUN_BASELINE_MLP:
-            score = baselines.MLPRegressor(
-                train_dataset, 
-                val_dataset, 
-                test_dataset, 
-                train_dataset.input_dim,
-                train_dataset.label_dim, 
-                HYPER.BATCH_SIZE_BASELINE, 
-                HYPER.EPOCHS_BASELINE
-            )
-            save_baseline_results(HYPER, dataset_class.__name__, 'MLP', score)
-
-
-def save_baseline_results(HYPER, dataset_name, experiment_name, score):
-    
-    """ """
-    
-    if HYPER.SAVE_BASELINE_RESULTS:
-        filename = 'baseresult_{}_{}_'.format()
-        saving_path = HYPER.PATH_TO_RESULTS + filename
-        with open(saving_path, "w") as f:
-            f.write(str(score))
-    
+    return args
 
 
 if __name__ == "__main__":
-    
-    # create hyper parameter instance
-    HYPER = hyper.HyperParameter()
-    
-    # run main experiments if chosen so
-    if HYPER.RUN_MAIN_EXPERIMENTS:
-        main(HYPER)
-    
-    # run baseline experiments if chosen so
-    if HYPER.RUN_BASELINE_EXPERIMENTS:
-        run_baseline_experiments(HYPER)
-        
-        
-        
+
+    args = parse_arguments()
+    with open("config.yaml", "r") as configfile:
+        config = yaml.safe_load(configfile)
+
+    datasets = load_datasets(args)
+
+    # if we want to run the baselines then do it
+    if args.baselines:
+        train_baselines(config["baselines"], datasets, args.RF, args.GB, args.MLP)
+
+    # if we want to use the GNN we need to load the encoders, graphbuilders and regressors
+    if args.train_single or args.train_universal:
+        autoencoders_dict = load_encoders(config["encoders"], datasets)
+        graphbuilders_dict = load_graphbuilders(config["graphbuilders"], datasets, autoencoders_dict)
+        regressors_dict = load_regressors(config["regressors"], datasets)
+        if args.train_single:
+            train_single(config["train_single"], datasets, autoencoders_dict, graphbuilders_dict, regressors_dict)
+        if args.train_universal:
+            # must first load the multidataset data loaders
+            data_loaders = load_multidatasets(config["train_universal"], datasets)
+            train_universal(config["train_universal"], data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict)

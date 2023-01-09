@@ -59,7 +59,7 @@ class ClimARTDataset(CheckedDataset):
         self._set_input_label_dim()
         self._sanity_check_data()
 
-        print(f"Loaded ClimART {split} split!")
+        print(f"Loaded ClimART {split} split! Number of samples: {len(self.data[0])}")
         print("============================================================")
 
     def __len__(self):
