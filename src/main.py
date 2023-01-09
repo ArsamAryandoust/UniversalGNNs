@@ -233,6 +233,8 @@ def main(HYPER):
         HYPER.LATENT_DIM
     )
     train_loader, val_loader, test_loader = loaders
+    
+    # create GNN
     model = UniversalGNN(
         HYPER.LATENT_DIM, 
         HYPER.LATENT_DIM, 
