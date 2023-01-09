@@ -70,7 +70,7 @@ class UberMovementDataset(CheckedDataset):
         self._set_input_label_dim()
         self._sanity_check_data()
 
-        print(f"Loaded UberMovement {self.split} split!")
+        print(f"Loaded UberMovement {self.split} split! Number of samples: {len(self.data[0])}")
         print("============================================================")
 
     def __len__(self):

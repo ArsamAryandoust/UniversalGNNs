@@ -19,7 +19,7 @@ class BuildingElectricityDataset(CheckedDataset):
         print("============================================================")
         print(f"Loading BuildingElectricity dataset on {split} split:")
         self.edge_level = False
-        self.spatial_temporal_indeces = []
+        self.spatial_temporal_indeces = list(range(302))
         self.normalize = normalize
         self.dataset_path = dataset_path
         self.split = split
