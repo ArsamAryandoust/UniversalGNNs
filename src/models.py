@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch_geometric.nn import GCNConv
+from torch_geometric.nn import GCNConv, DeepGCNLayer, BatchNorm
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from torch.optim import Adam
@@ -199,23 +199,35 @@ class VAE(pl.LightningModule):
         return optimizer
 
 class GNN(nn.Module):
-    def __init__(self, in_channels: int, hidden_channels: int, out_channels: int):
+    def __init__(self, in_channels: int, hidden_channels: int, out_channels: int, n_layers: int):
         super().__init__()
+        self.n_layers = n_layers
         self.conv1 = GCNConv(in_channels, hidden_channels)
-        self.conv2 = GCNConv(hidden_channels, out_channels)
+        self.conv2 = GCNConv(hidden_channels, hidden_channels)
+        self.conv3 = GCNConv(hidden_channels, out_channels)
+        self.norm1 = BatchNorm(hidden_channels)
+        self.norm2 = BatchNorm(out_channels)
+        self.act = nn.ReLU()
+        self.deeplayer1 = DeepGCNLayer(self.conv1, self.norm, self.act)
+        self.deeplayer2 = DeepGCNLayer(self.conv2, self.norm, self.act)
+        self.deeplayer3 = DeepGCNLayer(self.conv3, self.norm, self.act)
 
     def forward(self, node_matrix: torch.Tensor, edge_index: torch.Tensor, edge_weights) -> torch.Tensor:
         # x: Node feature matrix of shape [num_nodes, in_channels]
         # edge_index: Graph connectivity matrix of shape [2, num_edges]
-        x = self.conv1(node_matrix, edge_index, edge_weights).relu()
-        x = self.conv2(x.float(), edge_index, edge_weights)
+        x = self.deeplayer1(node_matrix, edge_index, edge_weights)
+        x = self.norm1(x.float())
+        for i in range(self.n_layers - 2):
+            x = self.deeplayer2(x.float(), edge_index, edge_weights)
+        x = self.deeplayer3(x.float(), edge_index, edge_weights)
+        x = self.norm2(x.float())
         return x.float()
 
 class UniversalGNN(pl.LightningModule):
-    def __init__(self, latent_dim, hidden_dim, out_dim, autoencoders_dict, graphbuilders_dict, regressors_dict):
+    def __init__(self, latent_dim, hidden_dim, out_dim, n_layers, autoencoders_dict, graphbuilders_dict, regressors_dict):
         super().__init__()
         self.save_hyperparameters()
-        self.gnn = GNN(latent_dim, hidden_dim, out_dim)
+        self.gnn = GNN(latent_dim, hidden_dim, out_dim, n_layers)
         self.autoencoders = nn.ModuleDict(autoencoders_dict)
         self.graphbuilders = graphbuilders_dict
         self.regressors = nn.ModuleDict(regressors_dict)
