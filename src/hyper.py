@@ -34,9 +34,10 @@ class HyperParameter:
     BATCH_SIZE = 128
     NUM_BATCHES_PER_EPOCH = 1000
     
-    # baseline parameters
+    # baseline experiment parameters
     BATCH_SIZE_BASELINE = 2048
     EPOCHS_BASELINE = 20
+    NUM_ESTIMATORS_RF = 128
     
     # random seed
     SEED = 3

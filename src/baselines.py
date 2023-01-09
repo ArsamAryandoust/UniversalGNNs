@@ -28,7 +28,7 @@ def RFRegressor(
     print("Fitting a RF regressor:")
     t = time.time()
     RFRegressor = RandomForestRegressor(
-        n_estimators=128, 
+        n_estimators=HYPER.NUM_ESTIMATORS_RF, 
         random_state=HYPER.SEED, 
         n_jobs=-1
     )
