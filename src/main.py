@@ -226,7 +226,7 @@ def main(HYPER):
         autoencoders_dict, 
         graphbuilders_dict, 
         regressors_dict 
-    )= load_datasets(HYPER.DATASET_CLASS_LIST, 128, 1000, HYPER.LATENT_DIM)
+    ) = load_datasets(HYPER.DATASET_CLASS_LIST, 128, 1000, HYPER.LATENT_DIM)
     train_loader, val_loader, test_loader = loaders
     model = UniversalGNN(
         HYPER.LATENT_DIM, 
@@ -259,8 +259,6 @@ def run_baseline_experiments(HYPER):
     
     """ """
 
-    device = torch.device("cuda")
-    
     scores = {}
     for dataset_class in HYPER.DATASET_CLASS_LIST:
         multisplit_dataset = MultiSplitDataset(dataset_class)
@@ -290,12 +288,9 @@ def run_baseline_experiments(HYPER):
                 HYPER.EPOCHS_BASELINE
             )
 
-    # show results
-    print(scores)
-    
-    # save results
+    # save results if chosen so
     if HYPER.SAVE_BASELINE_RESULTS:
-        filename = 'results_baselines.txt'
+        filename_base = 'baselines.txt'
         saving_path = HYPER.PATH_TO_RESULTS + filename
         with open(saving_path, "w") as f:
             f.write(str(scores))
