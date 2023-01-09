@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch_geometric.nn import GCNConv, DeepGCNLayer, BatchNorm
+from torch_geometric.nn import GCNConv, DeepGCNLayer, LayerNorm, Sequential
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from torch.optim import Adam
@@ -202,25 +202,25 @@ class GNN(nn.Module):
     def __init__(self, in_channels: int, hidden_channels: int, out_channels: int, n_layers: int):
         super().__init__()
         self.n_layers = n_layers
-        self.conv1 = GCNConv(in_channels, hidden_channels)
-        self.conv2 = GCNConv(hidden_channels, hidden_channels)
-        self.conv3 = GCNConv(hidden_channels, out_channels)
-        self.norm1 = BatchNorm(hidden_channels)
-        self.norm2 = BatchNorm(out_channels)
+        self.in_conv = GCNConv(in_channels, hidden_channels)
+        self.in_norm = LayerNorm(hidden_channels)
+        self.out_conv = GCNConv(hidden_channels, out_channels)
+        self.out_norm = LayerNorm(out_channels)
         self.act = nn.ReLU()
-        self.deeplayer1 = DeepGCNLayer(self.conv1, self.norm, self.act)
-        self.deeplayer2 = DeepGCNLayer(self.conv2, self.norm, self.act)
-        self.deeplayer3 = DeepGCNLayer(self.conv3, self.norm, self.act)
+        self.in_deeplayer = DeepGCNLayer(self.in_conv, self.in_norm, self.act)
+        self.hidden_deeplayers = Sequential()
+        for i in range(n_layers - 2):
+            conv = GCNConv(hidden_channels, hidden_channels)
+            norm = LayerNorm(hidden_channels)
+            self.hidden_deeplayers.append(DeepGCNLayer(conv, norm, self.act))
+        self.out_deeplayer = DeepGCNLayer(self.out_conv, self.out_norm, self.act)
 
     def forward(self, node_matrix: torch.Tensor, edge_index: torch.Tensor, edge_weights) -> torch.Tensor:
         # x: Node feature matrix of shape [num_nodes, in_channels]
         # edge_index: Graph connectivity matrix of shape [2, num_edges]
-        x = self.deeplayer1(node_matrix, edge_index, edge_weights)
-        x = self.norm1(x.float())
-        for i in range(self.n_layers - 2):
-            x = self.deeplayer2(x.float(), edge_index, edge_weights)
-        x = self.deeplayer3(x.float(), edge_index, edge_weights)
-        x = self.norm2(x.float())
+        x = self.in_deeplayer(node_matrix, edge_index, edge_weights)
+        x = self.hidden_deeplayers(x.float(), edge_index, edge_weights)
+        x = self.out_deeplayer(x.float(), edge_index, edge_weights)
         return x.float()
 
 class UniversalGNN(pl.LightningModule):
