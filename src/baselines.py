@@ -2,6 +2,7 @@ from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.multioutput import RegressorChain
 from models import MLP
 import time
+import wandb
 
 import torch
 import torch.nn as nn
@@ -18,9 +19,10 @@ from pytorch_lightning.loggers import WandbLogger
 #           Random Forests          #
 #####################################
 def RFRegressor(
-    HYPER, 
     train_data, 
-    test_data
+    test_data,
+    num_estimators,
+    seed
 ):
     
     """ """
@@ -28,8 +30,8 @@ def RFRegressor(
     print("Fitting a RF regressor:")
     t = time.time()
     RFRegressor = RandomForestRegressor(
-        n_estimators=HYPER.NUM_ESTIMATORS_RF, 
-        random_state=HYPER.SEED, 
+        n_estimators=num_estimators, 
+        random_state=seed, 
         n_jobs=-1
     )
     RFRegressor.fit(*train_data)
@@ -45,9 +47,9 @@ def RFRegressor(
 #         Gradient Boosting         #
 #####################################
 def GradBoostRegressor(
-    HYPER, 
     train_data, 
-    test_data
+    test_data,
+    seed
 ):
     
     """ """
@@ -55,7 +57,7 @@ def GradBoostRegressor(
     print("Fitting a Gradient Boosting regressor:")
     t = time.time()
     regressor = RegressorChain(
-        GradientBoostingRegressor(random_state=HYPER.SEED), 
+        GradientBoostingRegressor(random_state=seed), 
         verbose=True
     )
     regressor.fit(*train_data)
@@ -121,5 +123,6 @@ def MLPRegressor(
     )
     
     score = trainer.test(mlp, test_loader)
+    wandb.finish()
     
     return score
