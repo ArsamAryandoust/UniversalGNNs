@@ -40,6 +40,7 @@ class UberMovementDataset(CheckedDataset):
         print("============================================================")
         print(f"Loading UberMovement dataset on {split} split:")
         self.edge_level = True
+        self.spatial_temporal_indeces = list(range(7))                               #### CAUTION. ADDED BY ARSAM #########
         self.normalize = normalize
         self.NUM_ORIGINAL_COLUMNS = 11  # original columns
         self.NUM_LABELS = 4
