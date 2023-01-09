@@ -9,11 +9,10 @@ class HyperParameter:
     
     # choose which results to save
     SAVE_BASELINE_RESULTS = True
+    SAVE_MAIN_RESULTS = False         # ARSAM-CAUTION: NEEDS TO BE IMPLEMENTED 
     
     # Choose which experiments to run
     RUN_MAIN_EXPERIMENTS = False
-    
-    # Choose which baseline experiments to run
     RUN_BASELINE_EXPERIMENTS = True
     
     # Only apply if RUN_BASELINE_EXPERIMENTS == True
