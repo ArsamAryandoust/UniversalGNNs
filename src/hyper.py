@@ -31,6 +31,10 @@ class HyperParameter:
     
     # trainng parameters
     MAX_EPOCHS = 30
+    BATCH_SIZE = 128
+    NUM_BATCHES_PER_EPOCH = 1000
+    
+    # baseline parameters
     BATCH_SIZE_BASELINE = 2048
     EPOCHS_BASELINE = 20
     

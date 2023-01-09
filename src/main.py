@@ -226,7 +226,12 @@ def main(HYPER):
         autoencoders_dict, 
         graphbuilders_dict, 
         regressors_dict 
-    ) = load_datasets(HYPER.DATASET_CLASS_LIST, 128, 1000, HYPER.LATENT_DIM)
+    ) = load_datasets(
+        HYPER.DATASET_CLASS_LIST,
+        HYPER.BATCH_SIZE, 
+        HYPER.NUM_BATCHES_PER_EPOCH, 
+        HYPER.LATENT_DIM
+    )
     train_loader, val_loader, test_loader = loaders
     model = UniversalGNN(
         HYPER.LATENT_DIM, 
