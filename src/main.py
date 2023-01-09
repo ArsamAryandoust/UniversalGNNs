@@ -226,7 +226,7 @@ def main(HYPER):
         autoencoders_dict, 
         graphbuilders_dict, 
         regressors_dict 
-    )= load_datasets(HYPER.DATASET_CLASS_LIST, 128, 1000, HYPER.LATENT_DIM)
+    ) = load_datasets(HYPER.DATASET_CLASS_LIST, 128, 1000, HYPER.LATENT_DIM)
     train_loader, val_loader, test_loader = loaders
     model = UniversalGNN(
         HYPER.LATENT_DIM, 
@@ -259,28 +259,28 @@ def run_baseline_experiments(HYPER):
     
     """ """
 
-    device = torch.device("cuda")
-    
-    scores = {}
     for dataset_class in HYPER.DATASET_CLASS_LIST:
         multisplit_dataset = MultiSplitDataset(dataset_class)
         train_dataset, val_dataset, test_dataset = multisplit_dataset.get_splits()
 
-        scores[dataset_class.__name__] = {}
         if HYPER.RUN_BASELINE_RF:
-            scores[dataset_class.__name__]["RF"] = baselines.RFRegressor(
+            score = baselines.RFRegressor(
                 HYPER,
                 train_dataset.data, 
                 test_dataset.data
             )
+            save_baseline_results(HYPER, dataset_class.__name__, 'RF', score)
+            
         if HYPER.RUN_BASELINE_GB:
-            scores[dataset_class.__name__]["GB"] = baselines.GradBoostRegressor(
+            score = baselines.GradBoostRegressor(
                 HYPER,
                 train_dataset.data, 
                 test_dataset.data
             )
+            save_baseline_results(HYPER, dataset_class.__name__, 'GB', score)
+            
         if HYPER.RUN_BASELINE_MLP:
-            scores[dataset_class.__name__]["MLP"] = baselines.MLPRegressor(
+            score = baselines.MLPRegressor(
                 train_dataset, 
                 val_dataset, 
                 test_dataset, 
@@ -289,16 +289,18 @@ def run_baseline_experiments(HYPER):
                 HYPER.BATCH_SIZE_BASELINE, 
                 HYPER.EPOCHS_BASELINE
             )
+            save_baseline_results(HYPER, dataset_class.__name__, 'MLP', score)
 
-    # show results
-    print(scores)
+
+def save_baseline_results(HYPER, dataset_name, experiment_name, score):
     
-    # save results
+    """ """
+    
     if HYPER.SAVE_BASELINE_RESULTS:
-        filename = 'results_baselines.txt'
+        filename = 'baseresult_{}_{}_'.format()
         saving_path = HYPER.PATH_TO_RESULTS + filename
         with open(saving_path, "w") as f:
-            f.write(str(scores))
+            f.write(str(score))
     
 
 
