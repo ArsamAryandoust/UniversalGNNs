@@ -12,12 +12,15 @@ class HyperParameter:
     
     # Choose which experiments to run
     RUN_MAIN_EXPERIMENTS = True
-    RUN_BASELINE_EXPERIMENTS = False
     
     # Choose which baseline experiments to run
-    RUN_BASELINE_RF = True
-    RUN_BASELINE_GB = True
-    RUN_BASELINE_MLP = True
+    RUN_BASELINE_EXPERIMENTS = False
+    
+    # Only apply if RUN_BASELINE_EXPERIMENTS == True
+    if RUN_BASELINE_EXPERIMENTS: 
+        RUN_BASELINE_RF = True
+        RUN_BASELINE_GB = True
+        RUN_BASELINE_MLP = True
     
     # Choose which dataset to consider
     UBERMOVEMENT = True
