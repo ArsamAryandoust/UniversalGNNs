@@ -211,6 +211,7 @@ class VAE(pl.LightningModule):
         return optimizer
 
 class GNN(nn.Module):
+    
     def __init__(self, in_channels: int, hidden_channels: int, out_channels: int, n_layers: int):
         super().__init__()
         self.n_layers = n_layers
@@ -235,7 +236,6 @@ class GNN(nn.Module):
         x = self.hidden_deeplayers(x, edge_index, edge_weights)
         x = self.out_deeplayer(x.float(), edge_index, edge_weights)
         return x.float()
-
 
 class UniversalGNN(pl.LightningModule):
 
