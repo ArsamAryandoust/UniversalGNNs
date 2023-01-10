@@ -18,10 +18,8 @@ class GraphBuilder:
         distance_features_indeces = torch.IntTensor(self.params_indeces).to(device)
         distance_features = torch.index_select(batch, dim=1, index=distance_features_indeces)
         if isinstance(self.distance_function, int):
-          print("ciao torch")
           distances_matrix = torch.cdist(distance_features, distance_features, self.distance_function)
         else:
-          print("ciao norm")
           distance_features = distance_features.cpu().detach().numpy()
           distances_matrix = scipy.spatial.distance.cdist(distance_features, distance_features, self.distance_function)
           distances_matrix = torch.from_numpy(distances_matrix).to(device)
