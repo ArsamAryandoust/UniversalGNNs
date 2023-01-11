@@ -15,8 +15,7 @@ class UberMovementDataset(CheckedDataset):
     """
 
     def __init__(self,
-                 dataset_path: str
-                 | Path = "/EnergyTransitionTasks/UberMovement/",
+                 dataset_path: str | Path = "/EnergyTransitionTasks/UberMovement/",
                  split: str = "training",
                  use_region_centroids: bool = True,
                  use_normalized_coordinates: bool = True,
@@ -40,7 +39,22 @@ class UberMovementDataset(CheckedDataset):
         print("============================================================")
         print(f"Loading UberMovement dataset on {split} split:")
         self.edge_level = True
-        self.spatial_temporal_indeces = list(range(7))                               #### CAUTION. ADDED BY ARSAM #########
+
+        temporal_features = 4
+        if use_normalized_coordinates:
+            spatial_features = 9
+        else:
+            spatial_features = 6
+        spatial_indeces_1 = list(range(spatial_features))
+        spatial_indeces_2 = list(range(spatial_features, 2 * spatial_features))
+        temporal_indeces = list(range(2 * spatial_features, 2 * spatial_features + temporal_features))
+        spatio_temporal_indeces_1 = spatial_indeces_1 + temporal_indeces
+        spatio_temporal_indeces_2 = spatial_indeces_2 + temporal_indeces
+        features_indeces_1 = []
+        features_indeces_2 = []
+        self.spatial_temporal_indeces = ([spatio_temporal_indeces_1,
+                                          features_indeces_1], [spatio_temporal_indeces_2, features_indeces_2])
+
         self.normalize = normalize
         self.NUM_ORIGINAL_COLUMNS = 11  # original columns
         self.NUM_LABELS = 4
@@ -52,8 +66,7 @@ class UberMovementDataset(CheckedDataset):
 
         possible_splits = ["training", "validation", "testing"]
         if split not in possible_splits:
-            raise ValueError("Split must be one of " +
-                             ", ".join(possible_splits) + "!")
+            raise ValueError("Split must be one of " + ", ".join(possible_splits) + "!")
 
         if load_data and self.save_file.exists():
             print("Detected save file, trying to load it...")
@@ -104,7 +117,7 @@ class UberMovementDataset(CheckedDataset):
         files.sort()
         for file in tqdm(files):
             df = pd.read_csv(file)
-            main_data_frame = pd.concat([main_data_frame, df],  ignore_index=True)
+            main_data_frame = pd.concat([main_data_frame, df], ignore_index=True)
 
         print(main_data_frame.head())
 
@@ -114,31 +127,23 @@ class UberMovementDataset(CheckedDataset):
             city_zones_centroids_std = {}
             print("Calculating zone centroids...")
             for id in city2id.values():
-                centroids_stds = self._calculate_city_centroids(
-                    city_zones_df, id)
+                centroids_stds = self._calculate_city_centroids(city_zones_df, id)
                 if use_normalized_coordinates:
-                    city_zones_centroids_std[
-                        id] = self._normalize_centroids_location(
-                            centroids_stds)
+                    city_zones_centroids_std[id] = self._normalize_centroids_location(centroids_stds)
                 else:
                     city_zones_centroids_std[id] = centroids_stds
 
             # build a df with the new data
             print("Building spatial data with centroids...")
-            spatial_data = self._build_centroid_spatial_data(
-                main_data_frame, city_zones_centroids_std)
+            spatial_data = self._build_centroid_spatial_data(main_data_frame, city_zones_centroids_std)
             print(spatial_data.head())
 
         else:
-            raise NotImplementedError(
-                "Using all points for UberMovement regions is not implemented yet!"
-            )
+            raise NotImplementedError("Using all points for UberMovement regions is not implemented yet!")
 
         print("Substituting the processed spatial data...")
         # put the processed spatial data inside the main_dataframe
-        main_data_frame.drop(labels=["city_id", "source_id", "destination_id"],
-                             axis="columns",
-                             inplace=True) 
+        main_data_frame.drop(labels=["city_id", "source_id", "destination_id"], axis="columns", inplace=True)
         main_data_frame = pd.concat([spatial_data, main_data_frame], axis=1)
 
         # build the final X, Y
@@ -154,8 +159,7 @@ class UberMovementDataset(CheckedDataset):
         """
         Loads city -> id mapping from disk and returns a dict where dict[city] = id
         """
-        city_id_df = pd.read_csv(
-            Path(self.dataset_path) / "additional/0_city_to_id_mapping.csv")
+        city_id_df = pd.read_csv(Path(self.dataset_path) / "additional/0_city_to_id_mapping.csv")
         city_id_columns = city_id_df.columns.tolist()
         city_id_dict = city_id_df.to_dict("list")
         cities_list = city_id_dict[city_id_columns[0]]
@@ -192,8 +196,7 @@ class UberMovementDataset(CheckedDataset):
             stds.append(cord.std(axis=1))
         return np.array([centroids, stds])
 
-    def _normalize_centroids_location(
-            self, city_centroids_stds: np.ndarray) -> np.ndarray:
+    def _normalize_centroids_location(self, city_centroids_stds: np.ndarray) -> np.ndarray:
         """
         Takes as input the city centroids calculated with self._calculate_city_centroids() and normalizes the coordinates
         of the centroids with mean=0, std=1. Also adds the city mean coordinate to the returned array.
@@ -208,14 +211,11 @@ class UberMovementDataset(CheckedDataset):
         city_center = centroids.mean(axis=0)
         centroids_std = centroids.std(axis=0)
         centroids = (centroids - city_center) / centroids_std
-        city_center_broadcasted = np.broadcast_to(city_center,
-                                                  (num_zones, coord_dims))
+        city_center_broadcasted = np.broadcast_to(city_center, (num_zones, coord_dims))
         ret = np.array([city_center_broadcasted, centroids, stds])
         return ret
 
-    def _build_centroid_spatial_data(
-            self, data_frame: pd.DataFrame,
-            city_zones_centroids_std: dict[np.ndarray]) -> pd.DataFrame:
+    def _build_centroid_spatial_data(self, data_frame: pd.DataFrame, city_zones_centroids_std: dict[np.ndarray]) -> pd.DataFrame:
         """
         Builds a spatial DataFrame of size [num_samples, 12] or [num_samples, 18] that contains the spatial data given by the zone centroids and stds
         in the same order as data_frame (row i of the output corresponds to row i of data_frame).
@@ -227,14 +227,11 @@ class UberMovementDataset(CheckedDataset):
         source_ids = data_frame["source_id"].to_numpy()
         destination_ids = data_frame["destination_id"].to_numpy()
 
-        spatial_dims = city_zones_centroids_std[0].shape[
-            0] * city_zones_centroids_std[0].shape[2]
+        spatial_dims = city_zones_centroids_std[0].shape[0] * city_zones_centroids_std[0].shape[2]
         source_data = np.zeros((len(city_ids), spatial_dims))
         dest_data = np.zeros((len(city_ids), spatial_dims))
         cities_count = [0] * 14
-        for i, (cid, sid, did) in enumerate(
-                tqdm(zip(city_ids, source_ids, destination_ids),
-                     total=len(city_ids))):
+        for i, (cid, sid, did) in enumerate(tqdm(zip(city_ids, source_ids, destination_ids), total=len(city_ids))):
             # TODO: maybe find a more elegant way to do this?
             # temp fix for "London" that starts with zone 0 when all the others start with one
             # print("cid:", cid)
@@ -245,7 +242,7 @@ class UberMovementDataset(CheckedDataset):
             if cid != 6:
                 sid -= 1
                 did -= 1
-            if  sid < 0 or did < 0:
+            if sid < 0 or did < 0:
                 raise ValueError(f"Error: a zone id cannot be negative! City id:{cid}, sid={sid}, did={did}.")
             source_data[i] = city_zones_centroids_std[cid][:, sid, :].flatten()
             dest_data[i] = city_zones_centroids_std[cid][:, did, :].flatten()
@@ -254,18 +251,14 @@ class UberMovementDataset(CheckedDataset):
         print("spatial data shape:", data.shape)
         if spatial_dims == 6:
             columns = [
-                "s_x_mean", "s_y_mean", "s_z_mean", "s_x_std", "s_y_std",
-                "s_z_std", "d_x_mean", "d_y_mean", "d_z_mean", "d_x_std",
-                "d_y_std", "d_z_std"
+                "s_x_mean", "s_y_mean", "s_z_mean", "s_x_std", "s_y_std", "s_z_std", "d_x_mean", "d_y_mean", "d_z_mean",
+                "d_x_std", "d_y_std", "d_z_std"
             ]
         if spatial_dims == 9:
             columns = [
-                "s_city_center_x", "s_city_center_y", "s_city_center_z", 
-                "s_x_mean", "s_y_mean", "s_z_mean", "s_x_std", "s_y_std", 
-                "s_z_std",
-                "d_city_center_x", "d_city_center_y", "d_city_center_z",
-                "d_x_mean", "d_y_mean", "d_z_mean", "d_x_std", "d_y_std",
-                "d_z_std"
+                "s_city_center_x", "s_city_center_y", "s_city_center_z", "s_x_mean", "s_y_mean", "s_z_mean", "s_x_std", "s_y_std",
+                "s_z_std", "d_city_center_x", "d_city_center_y", "d_city_center_z", "d_x_mean", "d_y_mean", "d_z_mean", "d_x_std",
+                "d_y_std", "d_z_std"
             ]
         return pd.DataFrame(data, columns=columns)
 
