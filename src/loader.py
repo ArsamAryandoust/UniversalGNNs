@@ -92,7 +92,7 @@ def load_regressors(config: dict[str], datasets: dict[str, MultiSplitDataset]) -
     return regressors_dict
 
 
-def load_graphbuilders(config: dict[str], datasets: dict[str, MultiSplitDataset], autoencoders: dict[str, nn.Module]) -> dict[str, GraphBuilder]:
+def load_graphbuilders(config: dict[str], datasets: dict[str, MultiSplitDataset]) -> dict[str, GraphBuilder]:
     """
     Creates a grapgbuilder object associated with the corresponding datasets and autoencoders.
     """
@@ -102,7 +102,6 @@ def load_graphbuilders(config: dict[str], datasets: dict[str, MultiSplitDataset]
         graph_builder = GraphBuilder(distance_function=config["distance_function"],
                                         params_indeces=splits[0].spatial_temporal_indeces,
                                         connectivity=config["connectivity"],
-                                        encoder=autoencoders[dataset_name],
                                         edge_level_batch=splits[0].edge_level)
         for split in splits:
             split.graph_builder = graph_builder
@@ -111,7 +110,7 @@ def load_graphbuilders(config: dict[str], datasets: dict[str, MultiSplitDataset]
     return graphbuilders_dict
 
 
-def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset]) -> dict[str, nn.Module]:
+def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], graphbuilders: dict[str, GraphBuilder]) -> dict[str, nn.Module]:
     """
     Loads or trains the autoencoders for all datasets. 
     Returns the encoders dict where encoders_dict["dataset_name"] == encoder
@@ -126,11 +125,17 @@ def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset]) -> 
 
     for dataset_name, multidataset in datasets.items():
         train_dataset, validation_dataset, _ = multidataset.get_splits()
-        autoencoder = encoder_class(train_dataset.input_dim, config["latent_dim"])
+        if train_dataset.edge_level:
+            autoencoder = encoder_class(train_dataset.encoder_input_dim, config["latent_dim"])
+            autoencoder.set_edge_level_graphbuilder(graphbuilders[dataset_name])
+        else:
+            autoencoder = encoder_class(train_dataset.input_dim, config["latent_dim"])
         encoder_name = encoder_class.__name__
         savefile_path = Path(f"/UniversalGNNs/checkpoints/encoders/{dataset_name}") / f"{encoder_name}_{config['latent_dim']}.pt"
         if savefile_path.exists() and config["load_checkpoint"]:
             autoencoder.load_state_dict(torch.load(savefile_path))
+            if train_dataset.edge_level:
+                autoencoder.set_edge_level_graphbuilder(graphbuilders[dataset_name])
             print("Loaded autoencoder checkpoint in: ", savefile_path)
         else:
             print("Training new autoencoder and saving in: ", savefile_path)
@@ -140,5 +145,6 @@ def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset]) -> 
         
         autoencoder.requires_grad_(False)
         autoencoders_dict[dataset_name] = autoencoder
+        graphbuilders[dataset_name].set_encoder(autoencoder)
 
     return autoencoders_dict

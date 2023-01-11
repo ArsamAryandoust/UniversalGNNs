@@ -4,9 +4,9 @@ from torch_geometric.nn import GCNConv, DeepGCNLayer, LayerNorm, Sequential
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from torch.optim import Adam
-from datasets import CheckedDataset
 from GraphBuilder import GraphBuilder
 from torchmetrics.functional import r2_score
+from abc import ABC, abstractmethod
 
 
 class MLP(pl.LightningModule):
@@ -15,6 +15,11 @@ class MLP(pl.LightningModule):
         super().__init__()
         print(f"MLP with: layers of size: {input_size} -> {hidden_sizes} -> {output_size}.")
         assert len(hidden_sizes) > 0, "MLP must have at least 1 hidden layer!"
+
+        self.input_size = input_size
+        self.hidden_size = hidden_sizes
+        self.output_size = output_size
+
         self.input_layer = nn.Linear(input_size, hidden_sizes[0])
         self.layer_norm = nn.LayerNorm(hidden_sizes[0])
         self.dropout = nn.Dropout(dropout_prob)
@@ -125,7 +130,28 @@ class Decoder(nn.Module):
         return self.linear3(x)
 
 
-class AutoEncoder(pl.LightningModule):
+class BaseAutoEncoder(ABC, pl.LightningModule):
+
+    def __init__(self):
+        super().__init__()
+        self.edge_level = False
+
+    def set_edge_level_graphbuilder(self, graph_builder: GraphBuilder):
+        self.edge_level = True
+        self.graph_builder = graph_builder
+
+    def get_graph_batch(self, x):
+        if self.edge_level:
+            return self.graph_builder.compute_row_level_batch(x, self.device)
+        else:
+            return x
+
+    @abstractmethod
+    def get_latent(self, x):
+        pass
+
+
+class AutoEncoder(BaseAutoEncoder):
 
     def __init__(self, input_dim: int, latent_dim: int):
         super().__init__()
@@ -146,6 +172,7 @@ class AutoEncoder(pl.LightningModule):
 
     def common_step(self, batch):
         x, _ = batch
+        x = self.get_graph_batch(x)
         x_hat = self(x)
         loss = F.mse_loss(x, x_hat)
         return loss
@@ -165,7 +192,7 @@ class AutoEncoder(pl.LightningModule):
         return optimizer
 
 
-class VAE(pl.LightningModule):
+class VAE(BaseAutoEncoder):
 
     def __init__(self, input_dim: int, latent_dim: int):
         super().__init__()
@@ -186,12 +213,10 @@ class VAE(pl.LightningModule):
 
     def common_step(self, batch):
         x, _ = batch
+        x = self.get_graph_batch(x)
         x_hat = self(x)
         kl = self.encoder.kl
         loss = F.mse_loss(x, x_hat)
-
-        # print("kl:", kl)
-        # print("loss:",loss)
         return loss, kl
 
     def training_step(self, batch, batch_idx):
@@ -210,8 +235,9 @@ class VAE(pl.LightningModule):
         optimizer = Adam(self.parameters(), lr=1e-3)
         return optimizer
 
+
 class GNN(nn.Module):
-    
+
     def __init__(self, in_channels: int, hidden_channels: int, out_channels: int, n_layers: int):
         super().__init__()
         self.n_layers = n_layers
@@ -237,6 +263,7 @@ class GNN(nn.Module):
         x = self.out_deeplayer(x.float(), edge_index, edge_weights)
         return x.float()
 
+
 class UniversalGNN(pl.LightningModule):
 
     def __init__(self, latent_dim: int, hidden_dim: int, out_dim: int, n_layers: int, autoencoders_dict: dict[str, nn.Module],
@@ -251,10 +278,16 @@ class UniversalGNN(pl.LightningModule):
             for dataset_name in self.autoencoders.keys():
                 self.default_dataset_name = dataset_name
 
-
     def forward(self, x: torch.Tensor, dataset_name: str):
+        batch_size = x.shape[0]
         nodes_matrix, edges_indeces, edges_weights = self.graphbuilders[dataset_name].compute_graph(x, self.device)
         out = self.gnn(nodes_matrix, edges_indeces, edges_weights)
+        if self.graphbuilders[dataset_name].edge_level_batch:
+            source = out[:batch_size]
+            target = out[batch_size:]
+            assert len(source) == len(target), f"""
+                Error: edge-level batch has different sizes of source and target: {len(source)} vs {len(target)}"""
+            out = torch.hstack([source, target])
         return self.regressors[dataset_name](out)
 
     def common_step(self, batch, split: str):
