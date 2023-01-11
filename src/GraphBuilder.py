@@ -10,6 +10,8 @@ class GraphBuilder:
         self.connectivity = connectivity
         self.encoder = encoder
         self.edge_level_batch = edge_level_batch
+        if edge_level_batch:
+            self.edge_level_params_indeces = params_indeces
     
     def compute_nodes_matrix(self, batch):
         return self.encoder.get_latent(batch)
@@ -41,10 +43,10 @@ class GraphBuilder:
         return result
 
     def compute_row_level_batch(self, batch, device):
-        distance_features_indeces_1 = torch.tensor(self.params_indeces[0][0], dtype=torch.long, device=device)
-        distance_features__indeces_2 = torch.tensor(self.params_indeces[1][0], dtype=torch.long, device=device)
-        node_features_indeces_1 = torch.tensor(self.params_indeces[0][1], dtype=torch.long, device=device)
-        node_features_indeces_2 = torch.tensor(self.params_indeces[1][1], dtype=torch.long, device=device)
+        distance_features_indeces_1 = torch.tensor(self.edge_level_params_indeces[0][0], dtype=torch.long, device=device)
+        distance_features__indeces_2 = torch.tensor(self.edge_level_params_indeces[1][0], dtype=torch.long, device=device)
+        node_features_indeces_1 = torch.tensor(self.edge_level_params_indeces[0][1], dtype=torch.long, device=device)
+        node_features_indeces_2 = torch.tensor(self.edge_level_params_indeces[1][1], dtype=torch.long, device=device)
         distance_features_1 = torch.index_select(batch, dim=1, index=distance_features_indeces_1)
         distance_features_2 = torch.index_select(batch, dim=1, index=distance_features__indeces_2)
         node_features_1 = torch.index_select(batch, dim=1, index=node_features_indeces_1)
