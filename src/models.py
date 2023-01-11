@@ -302,8 +302,8 @@ class UniversalGNN(pl.LightningModule):
         out = self(x, dataset_name)
         loss = F.mse_loss(out, y)
         r2 = r2_score(out, y)
-        self.log(f"{split} loss", loss, on_epoch=True, batch_size=len(x))
-        self.log(f"{split} R2", r2, on_epoch=True, batch_size=len(x))
+        self.log(f"{dataset_name} {split} loss", loss, on_epoch=True, batch_size=len(x))
+        self.log(f"{dataset_name} {split} R2", r2, on_epoch=True, batch_size=len(x))
         return loss
 
     def training_step(self, batch, batch_idx):

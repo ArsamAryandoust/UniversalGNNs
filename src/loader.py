@@ -59,7 +59,7 @@ def load_multidatasets(config: dict[str], datasets: dict[str, MultiSplitDataset]
     test_dataset = MultiDataset(test_datasets)
 
     train_sampler = MultiDatasetBatchSampler(train_dataset, batch_size, num_batches_per_epoch, drop_last=drop_last)
-    val_sampler = MultiDatasetBatchSampler(val_dataset, batch_size, sequential=True, drop_last=drop_last)
+    val_sampler = MultiDatasetBatchSampler(val_dataset, batch_size, num_batches_per_epoch, drop_last=drop_last)
     test_sampler = MultiDatasetBatchSampler(test_dataset, batch_size, sequential=True, drop_last=drop_last)
 
     train_loader = DataLoader(train_dataset, batch_sampler=train_sampler, num_workers=0, collate_fn=train_dataset.collate_fn)

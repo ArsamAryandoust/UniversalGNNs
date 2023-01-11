@@ -9,8 +9,8 @@ encoders:
     encoder_class: "AutoEncoder"
     save_path: "/UniversalGNNs/checkpoints/encoders/"
     batch_size: 1024
-    max_epochs: 50
-    max_steps: 100_000
+    max_epochs: 1
+    max_steps: 200_000
     latent_dim: 512
     load_checkpoint: true
 
@@ -34,5 +34,5 @@ train_universal:
     batch_size: 1024
     batches_per_epoch: 1000
     drop_last: true
-    epochs: 50
+    epochs: 100
     n_layers: 4

@@ -109,7 +109,7 @@ def train_universal(config: dict[str], loaders: tuple[DataLoader, DataLoader, Da
                          regressors_dict)
 
     # train the GNN
-    datasets_str = [d.__name__ for d in autoencoders_dict.keys()]
+    datasets_str = [d for d in autoencoders_dict.keys()]
     logger = WandbLogger(dir="./logs/UniversalGNN/", project="UniversalGNNs", tags=["UNIVERSALGNN", str(latent_dim)] + datasets_str)
     trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=config["epochs"], log_every_n_steps=50, logger=logger)
     trainer.fit(model, train_loader, val_loader)
