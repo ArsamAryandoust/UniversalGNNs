@@ -1,20 +1,23 @@
 import torch
 import torch_geometric
+import torch.nn as nn
 import numpy as np
 import scipy
 
 class GraphBuilder:
-    def __init__(self, distance_function, params_indeces, connectivity, encoder, edge_level_batch=False):
+    def __init__(self, distance_function, params_indeces, connectivity, edge_level_batch=False):
         self.distance_function = distance_function
         self.params_indeces = params_indeces
         self.connectivity = connectivity
-        self.encoder = encoder
         self.edge_level_batch = edge_level_batch
         if edge_level_batch:
             self.edge_level_params_indeces = params_indeces
     
     def compute_nodes_matrix(self, batch):
         return self.encoder.get_latent(batch)
+
+    def set_encoder(self, encoder: nn.Module):
+        self.encoder = encoder
 
     def compute_edges_matrices(self, batch, device):
         distance_features_indeces = torch.tensor(self.params_indeces, dtype=torch.long, device=device)

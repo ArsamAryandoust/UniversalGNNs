@@ -54,6 +54,7 @@ class UberMovementDataset(CheckedDataset):
         features_indeces_2 = []
         self.spatial_temporal_indeces = ([spatio_temporal_indeces_1,
                                           features_indeces_1], [spatio_temporal_indeces_2, features_indeces_2])
+        self.encoder_input_dim = spatial_features + temporal_features
 
         self.normalize = normalize
         self.NUM_ORIGINAL_COLUMNS = 11  # original columns
