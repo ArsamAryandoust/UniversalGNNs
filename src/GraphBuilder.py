@@ -12,10 +12,10 @@ class GraphBuilder:
         self.edge_level_batch = edge_level_batch
     
     def compute_nodes_matrix(self, batch):
-        return batch
+        return self.encoder.get_latent(batch)
 
     def compute_edges_matrices(self, batch, device):
-        distance_features_indeces = torch.IntTensor(self.params_indeces).to(device)
+        distance_features_indeces = torch.tensor(self.params_indeces, dtype=torch.long, device=device)
         distance_features = torch.index_select(batch, dim=1, index=distance_features_indeces)
         if isinstance(self.distance_function, int):
           distances_matrix = torch.cdist(distance_features, distance_features, self.distance_function)
@@ -40,11 +40,11 @@ class GraphBuilder:
             result = 1 - x
         return result
 
-    def compute_row_level_batch(self, batch):
-        distance_features_indeces_1 = torch.IntTensor(self.params_indeces[0][0])
-        distance_features__indeces_2 = torch.IntTensor(self.params_indeces[1][0])
-        node_features_indeces_1 = torch.IntTensor(self.params_indeces[0][1])
-        node_features_indeces_2 = torch.IntTensor(self.params_indeces[1][1])
+    def compute_row_level_batch(self, batch, device):
+        distance_features_indeces_1 = torch.tensor(self.params_indeces[0][0], dtype=torch.long, device=device)
+        distance_features__indeces_2 = torch.tensor(self.params_indeces[1][0], dtype=torch.long, device=device)
+        node_features_indeces_1 = torch.tensor(self.params_indeces[0][1], dtype=torch.long, device=device)
+        node_features_indeces_2 = torch.tensor(self.params_indeces[1][1], dtype=torch.long, device=device)
         distance_features_1 = torch.index_select(batch, dim=1, index=distance_features_indeces_1)
         distance_features_2 = torch.index_select(batch, dim=1, index=distance_features__indeces_2)
         node_features_1 = torch.index_select(batch, dim=1, index=node_features_indeces_1)
@@ -57,7 +57,7 @@ class GraphBuilder:
 
     def compute_graph(self, batch, device):
         if self.edge_level_batch:
-            batch = self.compute_row_level_batch(batch)
+            batch = self.compute_row_level_batch(batch, device)
         nodes_matrix = self.compute_nodes_matrix(batch)
         edges_indeces, edges_weights = self.compute_edges_matrices(batch, device)
         return nodes_matrix, edges_indeces, edges_weights

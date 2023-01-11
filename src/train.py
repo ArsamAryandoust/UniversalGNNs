@@ -90,7 +90,7 @@ def train_single(config: dict[str], datasets: dict[str, MultiSplitDataset], auto
         logger = WandbLogger(dir="./logs/UniversalGNN/",
                              project="UniversalGNNs",
                              tags=["UNIVERSALGNN", str(latent_dim), dataset_name])
-        trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=config["epochs"], log_every_n_steps=50, logger=logger)
+        trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=config["epochs"], max_steps=config["max_steps"], log_every_n_steps=50, logger=logger)
         trainer.fit(model, train_loader, val_loader)
         trainer.test(model, test_loader)
         wandb.config.update(config)
