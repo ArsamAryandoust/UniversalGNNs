@@ -1,27 +1,6 @@
 # Universal graph neural networks for multi-task learning
 
-We seek a universal graph representation of data that is able to capture arbitrary
-events described by arbitary data types. Our goal is to develop a universal deep 
-learning model that is then able to solve multiple tasks from multiple domains 
-using a single model instance by sharing model parameters through a backbone graph 
-neural network.
-
-We want to test whether using a single model instance for solving multiple tasks 
-can save computation and increase prediction accuracy compared to using different 
-models on each task. We hypothesize that already performed computation for solving 
-some tasks can be leveraged for better solving other sets of related and unrelated 
-tasks. If this is found to be true, our results will indicate that multi-modal
-multi-task deep learning models can achieve a general level of task-independent 
-intelligence that needs to be further explored. 
-
-In the following, we empirically test our hypothesis on three prediction tasks that 
-are important for enhancing the global energy transition, and are independent from
-each other in terms of the data they involve: first, we predict travel times between 
-different city zones that are measured by Uber and are used to infer car parking 
-patterns for the urban planning of electric mobility; second, we predict atmospheric 
-radiative transfer that is modeled by the Canadian Earth System Model and is important
-for reducing the sparsity of such physiscs informed models due to their high
-computational complexity.
+Deep learning (DL) models for multi-modal multi-task learning are increasingly found to have the ability to assist us in solving sophisticated real world problems. The most recent and powerful representatives are large language based models like Gato developed at Deep Mind, which is able to play Atari, caption images, chat, stack blocks with a real robot arm and much more using a single generalist DL agent, and ChatGPT developed at Open AI, which is able to write and debug code in multiple languages, derive mathematical theorems and much more, using again a single DL model that learns from interactions with humans. A natural question that arises from these developments is whether multi-modal multi-task DL models, which we hereafter simply call *universal* DL models, are also able to assist us in solving more important and urgent problems such as for example the many challenges involved in enhancing the global energy transition and mitigating climate change. 
 
 
 ## Download
