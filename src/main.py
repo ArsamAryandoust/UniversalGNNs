@@ -63,8 +63,8 @@ if __name__ == "__main__":
 
     # if we want to use the GNN we need to load the encoders, graphbuilders and regressors
     if args.train_single or args.train_universal:
-        autoencoders_dict = load_encoders(config["encoders"], datasets)
-        graphbuilders_dict = load_graphbuilders(config["graphbuilders"], datasets, autoencoders_dict)
+        graphbuilders_dict = load_graphbuilders(config["graphbuilders"], datasets)
+        autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict)
         regressors_dict = load_regressors(config["regressors"], datasets)
         if args.train_single:
             train_single(config["train_single"], datasets, autoencoders_dict, graphbuilders_dict, regressors_dict)

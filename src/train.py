@@ -60,7 +60,7 @@ def train_autoencoder(config: dict, autoencoder: nn.Module, train_dataset: Check
     logger = WandbLogger(dir=f"./logs/{train_loader.dataset.__class__.__name__}/",
                          project="UniversalGNNs",
                          tags=["ENCODER", train_loader.dataset.__class__.__name__, str(config["latent_dim"])])
-    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=30, log_every_n_steps=10, logger=logger, max_steps=100_000)
+    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=config["max_epochs"], log_every_n_steps=10, logger=logger, max_steps=config["max_steps"])
     trainer.fit(autoencoder, train_loader, val_loader)
     wandb.finish()
 
