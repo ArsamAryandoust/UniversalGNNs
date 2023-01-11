@@ -15,8 +15,8 @@ encoders:
     load_checkpoint: true
 
 graphbuilders:
-    connectivity: 0.5
-    distance_function: "euclidean"
+    connectivity: 0.001
+    distance_function: 2
 
 regressors:
     latent_dim: 512
@@ -25,6 +25,7 @@ train_single:
     latent_dim: 512
     batch_size: 1024
     epochs: 1
+    max_steps: 200_000
     drop_last: true
     n_layers: 4
 
@@ -33,5 +34,5 @@ train_universal:
     batch_size: 1024
     batches_per_epoch: 1000
     drop_last: true
-    epochs: 1
+    epochs: 50
     n_layers: 4
