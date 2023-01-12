@@ -24,10 +24,12 @@ regressors:
 train_single:
     latent_dim: 512
     batch_size: 1024
-    epochs: 1
     max_steps: 200_000
     drop_last: true
     n_layers: 4
+    use_random_sampler: true
+    batches_per_epoch: 330
+    epochs: 100
 
 train_universal:
     latent_dim: 512
