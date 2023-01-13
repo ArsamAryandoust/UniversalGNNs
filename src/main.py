@@ -65,10 +65,11 @@ if __name__ == "__main__":
     if args.train_single or args.train_universal:
         graphbuilders_dict = load_graphbuilders(config["graphbuilders"], datasets)
         autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict)
-        regressors_dict = load_regressors(config["regressors"], datasets)
         if args.train_single:
+            regressors_dict = load_regressors(config["regressors"], datasets)
             train_single(config["train_single"], datasets, autoencoders_dict, graphbuilders_dict, regressors_dict)
         if args.train_universal:
             # must first load the multidataset data loaders
+            regressors_dict = load_regressors(config["regressors"], datasets)
             data_loaders = load_multidatasets(config["train_universal"], datasets)
             train_universal(config["train_universal"], data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict)
