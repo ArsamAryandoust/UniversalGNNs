@@ -1,9 +1,14 @@
 baselines:
+    results_path: "/UniversalGNNs/results/"
     seed: 42
     rf_num_estimators: 128
-    mlp_batch_size: 1024
-    mlp_epochs: 50
-    results_path: "/UniversalGNNs/results/"
+    mlp:
+        batch_size: 1024
+        epochs: 100
+        batches_per_epoch: 330
+        drop_last: true
+        use_random_sampler: true
+        dropout: 0
 
 encoders:
     encoder_class: "AutoEncoder"
