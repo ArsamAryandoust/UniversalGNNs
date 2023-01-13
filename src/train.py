@@ -12,14 +12,14 @@ from models import UniversalGNN
 import baselines
 
 
-def train_baselines(config, datasets: dict, train_rf: bool, train_gb: bool, train_mlp: bool):
+def train_baselines(config, datasets: dict[str, MultiSplitDataset], train_rf: bool, train_gb: bool, train_mlp: bool):
     """
     Trains the specified baseline models on the datasets provided.
     """
 
     Path(config["results_path"]).mkdir(exist_ok=True, parents=True)
 
-    for multisplit_dataset in datasets:
+    for dataset_name, multisplit_dataset in datasets.items():
         train_dataset, val_dataset, test_dataset = multisplit_dataset.get_splits()
 
         if train_rf:
@@ -31,8 +31,7 @@ def train_baselines(config, datasets: dict, train_rf: bool, train_gb: bool, trai
             save_baseline_results(config["results_path"], train_dataset.__class__.__name__, 'GB', score)
 
         if train_mlp:
-            score = baselines.MLPRegressor(train_dataset, val_dataset, test_dataset, train_dataset.input_dim,
-                                           train_dataset.label_dim, config["mlp_batch_size"], config["mlp_epochs"])
+            score = baselines.MLPRegressor(config["mlp"], dataset_name, multisplit_dataset)
             save_baseline_results(config["results_path"], train_dataset.__class__.__name__, 'MLP', score)
 
 
