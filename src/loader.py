@@ -81,9 +81,12 @@ def load_regressors(config: dict[str], datasets: dict[str, MultiSplitDataset]) -
         # concatenation of the features of the 2 nodes.
         if splits[0].edge_level == True:
             regr_input_dims *= 2
-        regr_hidden_dims = (regr_input_dims + splits[0].label_dim) // 2
 
-        regressor = MLP(regr_input_dims, [regr_hidden_dims], splits[0].label_dim)
+        if config["use_mlp"]:
+            regr_hidden_dims = (regr_input_dims + splits[0].label_dim) // 2
+            regressor = MLP(regr_input_dims, [regr_hidden_dims], splits[0].label_dim)
+        else:
+            regressor = nn.Linear(regr_input_dims, splits[0].label_dim)
 
         for split in splits:
             split.regressor = regressor
