@@ -6,8 +6,9 @@ We propose a model that we call **UniversalGNN** for this, which is composed of 
 an auto-encoder, a graph builder, a backbone GNN and a final regressor or classifier. The backbone GNN is the only component 
 that is shared across all tasks, while the design of the other components depends on the individual tasks such that we create one for each dataset.
 
-## Download
-Download this repository and the `EnergyTransitionTasks` one to your home directory:
+## Getting started
+Download this repository and the `EnergyTransitionTasks` one to your home directory.
+The `EnergyTransitionTasks` repository contains the datasets we use here:
 
 ```
 cd 
@@ -16,11 +17,12 @@ git clone https://github.com/ArsamAryandoust/EnergyTransitionTasks.git
 cd UniversalGNNs
 ```
 
-## Docker
-
 The easiest way to build and run the Docker container is with the `build_and_run.sh` script inside the `UniversalGNNs` folder.
+To do this, execute the following command:
 
-## Getting started
+```
+./build_and_run.sh
+```
 
 All the models (included the baselines) can be trained from the `main.py` file inside of the `src` folder. 
 The easiest way to do so is to start the Docker container built as above and inside of it run:
