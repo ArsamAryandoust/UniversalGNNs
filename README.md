@@ -1,14 +1,10 @@
 # Universal graph neural networks for multi-task learning
 
-Deep learning (DL) models for multi-modal multi-task learning are increasingly found to have the ability to assist us in solving sophisticated real world problems. The most recent and powerful representatives are large language based models like Gato developed at Deep Mind, which is able to play Atari, caption images, chat, stack blocks with a real robot arm and much more using a single generalist DL agent, and ChatGPT developed at Open AI, which is able to write and debug code in multiple languages, derive mathematical theorems and much more, using again a single DL model that learns from interactions with humans. A natural question that arises from these developments is whether multi-modal multi-task DL models, which we hereafter simply call *universal* DL models, are also able to assist us in solving more important and urgent problems such as for example the many challenges involved in enhancing the global energy transition and mitigating climate change. 
 
-Machine learning (ML) is generally found to have a significant potential for enhancing technologies that we urgently need for climate change mitigation and adaptation by solving a wide range of often complex prediction problems. The literature on tackling climate change with ML, however, is still very young and does not examine the role of universal DL models. A recent study that has come closest to this examines automated ML (AutoML) frameworks for tackling climate change related prediction problems, and finds that existing frameworks fail to outperform human designed models because they are mostly designed with an emphasis on more mainstream tasks from the fields of computer vision and natural language processing, and are less suited for common climate change related themes like physics constrained ML and spatio-temporal data. AutoML reduces the need for human expertise for using ML by utilizing hyper parameter optimization, meta learning and neural architecture search. Since tackling climate change with ML requires domain experts without ML expertise from various fields like energy, mobility, policy and ecology to collaborate with ML experts for solving their individual prediction tasks, AutoML frameworks may, similar to universal DL models, be suitable assistants to domain experts where collaborations are difficult to realize and inefficient at scale. A fundamental research question that therefore remains open is how universal DL models perform on solving typical climate change related tasks and whether they may be useful for enhancing AutoML technology. 
-
-In this repository, we design a universal graph representation of data and a universal graph neural network (GNN) prediction model that we call UniversalGNN, which is able to solve multiple tasks with arbitrary data types. We investigate if solving several tasks with one instance of our UniversalGNN can improve performance compared with solving each task with a separate instance of our UniversalGNN. For this, we conduct two sets of experiments on three different prediction tasks. In a first set of experiments, we solve each prediction task with a separate instance of our UniversalGNN. This represents the current default method of choice and serves us as a baseline. In a second set of experiments, we train another instance of our UniversalGNN for solving all three prediction tasks simultaneously, and compare performance against our baselines. All models are evaluated against the performance of a random forest (RF) benchmark and are further compared with the performance of a simple multi-layer perceptron (MLP).
-
-The prediction tasks that we exemplarily solve are important for electrifying our energy consumption and supplying its electricity from renewable sources like wind and solar. This is an effective way to decarbonize our grids and mitigate climate change. In the first task, we predict origin-destination matrices of travel times between different zones of a city, which helps us to infer where cars are parked at what times for the urban planning of charging stations and power systems with high shares of electric mobility. In the second task, we predict the atmospheric radiative transfer used in weather and climate models, which helps us to fill information gaps for times and places where classic models are too computationally expensive to be run. In the third task, we predict the electric load profile of buildings from purely remotely sensed meteorological conditions and aerial images, which helps us to distribute smart meters and collect their data more effectively for a transition to renewable electricity systems. In the following, we will describe our UniversalGNN and its training method before we present and discuss our experimental results.
-
-Given arbitrary prediction tasks and datasets, we want to train a single DL model that is able to solve them all. We propose a model that we call **UniversalGNN** for this, which is composed of four different components: an auto-encoder, a graph builder, a backbone GNN and a final regressor or classifier. The backbone GNN is the only component that is shared across all tasks, while the design of the other components depends on the individual tasks such that we create one for each dataset.
+Given arbitrary prediction tasks and datasets, we want to train a single DL model that is able to solve them all. 
+We propose a model that we call **UniversalGNN** for this, which is composed of four different components: 
+an auto-encoder, a graph builder, a backbone GNN and a final regressor or classifier. The backbone GNN is the only component 
+that is shared across all tasks, while the design of the other components depends on the individual tasks such that we create one for each dataset.
 
 ## Download
 Download this repository to your home directory:
@@ -27,26 +23,20 @@ Build main Docker container:
 docker build -t main Docker
 ```
 
+## Getting started
 
-## Jupyter notebooks inside Docker containers
-
-Build Jupyter notebook container:
-
-```
-docker build -t main_notebook DockerNotebook
-```
-
-Compute using CPU only:
+All the models (included the baselines) can be trained from the `main.py` file inside of the `src` folder. 
+The easiest way to do so is to start the Docker container built as above and inside of it run:
 
 ```
-docker run -it -v ~/UniversalGNNs:/UniversalGNNs -p 3333:1111 main_notebook
+python3 src/main.py --help
 ```
 
-Compute using GPUs too:
+This will show the available command line arguments that control the models that will be trained. 
+For example, training the UniversalGNN model on the ClimART dataset is as eeasy as:
 
 ```
-docker run -it --gpus all -v ~/UniversalGNNs:/UniversalGNNs -p 3333:1111 main_notebook
+python3 src/main.py -climart --train_single
 ```
 
-Open the link that shows in your terminal with a browser. Then, replace the port 
-1111 with 3333 in your browser link to see notebooks inside the Docker container.
+All the configurations reguarging how the models are trained are found inside the `config.yaml` file.
