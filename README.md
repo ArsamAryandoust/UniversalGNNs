@@ -1,28 +1,6 @@
 # Universal graph neural networks for multi-task learning
 
-We seek a universal graph representation of data that is able to capture arbitrary
-events described by arbitary data types. Our goal is to develop a universal deep 
-learning model that is then able to solve multiple tasks from multiple domains 
-using a single model instance by sharing model parameters through a backbone graph 
-neural network.
-
-We want to test whether using a single model instance for solving multiple tasks 
-can save computation and increase prediction accuracy compared to using different 
-models on each task. We hypothesize that already performed computation for solving 
-some tasks can be leveraged for better solving other sets of related and unrelated 
-tasks. If this is found to be true, our results will indicate that multi-modal
-multi-task deep learning models can achieve a general level of task-independent 
-intelligence that needs to be further explored. 
-
-In the following, we empirically test our hypothesis on three prediction tasks that 
-are important for enhancing the global energy transition, and are independent from
-each other in terms of the data they involve: first, we predict travel times between 
-different city zones that are measured by Uber and are used to infer car parking 
-patterns for the urban planning of electric mobility; second, we predict atmospheric 
-radiative transfer that is modeled by the Canadian Earth System Model and is important
-for reducing the sparsity of such physiscs informed models due to their high
-computational complexity.
-
+Given arbitrary prediction tasks and datasets, we want to train a single DL model that is able to solve them all. We propose a model that we call **UniversalGNN** for this, which is composed of four different components: an auto-encoder, a graph builder, a backbone GNN and a final regressor or classifier. The backbone GNN is the only component that is shared across all tasks, while the design of the other components depends on the individual tasks such that we create one for each dataset.
 
 ## Download
 Download this repository to your home directory:
@@ -41,26 +19,18 @@ Build main Docker container:
 docker build -t main Docker
 ```
 
+## Getting started
 
-## Jupyter notebooks inside Docker containers
-
-Build Jupyter notebook container:
-
-```
-docker build -t main_notebook DockerNotebook
-```
-
-Compute using CPU only:
+All the models (included the baselines) can be trained from the `main.py` file inside of the `src` folder. The easiest way to do so is to start the Docker container built as above and inside of it run:
 
 ```
-docker run -it -v ~/UniversalGNNs:/UniversalGNNs -p 3333:1111 main_notebook
+python3 main.py
 ```
 
-Compute using GPUs too:
+This will show the available command line arguments that control the models that will be trained. For example, training the UniversalGNN model on the ClimART dataset is as eeasy as:
 
 ```
-docker run -it --gpus all -v ~/UniversalGNNs:/UniversalGNNs -p 3333:1111 main_notebook
+python3 main.py -climart --train_single
 ```
 
-Open the link that shows in your terminal with a browser. Then, replace the port 
-1111 with 3333 in your browser link to see notebooks inside the Docker container.
+All the configurations reguarging how the models are trained are found inside the `config.yaml` file.
