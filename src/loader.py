@@ -59,7 +59,7 @@ def load_multidatasets(config: dict[str], datasets: dict[str, MultiSplitDataset]
     test_dataset = MultiDataset(test_datasets)
 
     train_sampler = MultiDatasetBatchSampler(train_dataset, batch_size, num_batches_per_epoch, drop_last=drop_last)
-    val_sampler = MultiDatasetBatchSampler(val_dataset, batch_size, sequential=True, drop_last=drop_last)
+    val_sampler = MultiDatasetBatchSampler(val_dataset, batch_size, num_batches_per_epoch, drop_last=drop_last)
     test_sampler = MultiDatasetBatchSampler(test_dataset, batch_size, sequential=True, drop_last=drop_last)
 
     train_loader = DataLoader(train_dataset, batch_sampler=train_sampler, num_workers=0, collate_fn=train_dataset.collate_fn)
@@ -81,9 +81,12 @@ def load_regressors(config: dict[str], datasets: dict[str, MultiSplitDataset]) -
         # concatenation of the features of the 2 nodes.
         if splits[0].edge_level == True:
             regr_input_dims *= 2
-        regr_hidden_dims = (regr_input_dims + splits[0].label_dim) // 2
 
-        regressor = MLP(regr_input_dims, [regr_hidden_dims], splits[0].label_dim)
+        if config["use_mlp"]:
+            regr_hidden_dims = (regr_input_dims + splits[0].label_dim) // 2
+            regressor = MLP(regr_input_dims, [regr_hidden_dims], splits[0].label_dim)
+        else:
+            regressor = nn.Linear(regr_input_dims, splits[0].label_dim)
 
         for split in splits:
             split.regressor = regressor
