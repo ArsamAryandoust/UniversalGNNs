@@ -25,7 +25,7 @@ graphbuilders:
 
 regressors:
     latent_dim: 512
-    use_mlp: false
+    use_mlp: true
 
 train_single:
     latent_dim: 512

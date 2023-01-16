@@ -24,13 +24,13 @@ docker build -t main Docker
 All the models (included the baselines) can be trained from the `main.py` file inside of the `src` folder. The easiest way to do so is to start the Docker container built as above and inside of it run:
 
 ```
-python3 main.py
+python3 src/main.py --help
 ```
 
 This will show the available command line arguments that control the models that will be trained. For example, training the UniversalGNN model on the ClimART dataset is as eeasy as:
 
 ```
-python3 main.py -climart --train_single
+python3 src/main.py -climart --train_single
 ```
 
 All the configurations reguarging how the models are trained are found inside the `config.yaml` file.
