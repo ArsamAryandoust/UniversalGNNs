@@ -3,21 +3,18 @@
 Given arbitrary prediction tasks and datasets, we want to train a single DL model that is able to solve them all. We propose a model that we call **UniversalGNN** for this, which is composed of four different components: an auto-encoder, a graph builder, a backbone GNN and a final regressor or classifier. The backbone GNN is the only component that is shared across all tasks, while the design of the other components depends on the individual tasks such that we create one for each dataset.
 
 ## Download
-Download this repository to your home directory:
+Download this repository and the `EnergyTransitionTasks` one to your home directory:
 
 ```
 cd 
-git clone https://github.com/ArsamAryandoust/UniversalGNNs
+git clone https://github.com/ArsamAryandoust/UniversalGNNs.git
+git clone https://github.com/ArsamAryandoust/EnergyTransitionTasks.git
 cd UniversalGNNs
 ```
 
 ## Docker
 
-Build main Docker container:
-
-```
-docker build -t main Docker
-```
+The easiest way to build and run the Docker container is with the `build_and_run.sh` script inside the `UniversalGNNs` folder.
 
 ## Getting started
 
