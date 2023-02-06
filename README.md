@@ -6,6 +6,8 @@ We propose a model that we call **UniversalGNN** for this, which is composed of 
 an auto-encoder, a graph builder, a backbone GNN and a final regressor or classifier. The backbone GNN is the only component 
 that is shared across all tasks, while the design of the other components depends on the individual tasks such that we create one for each dataset.
 
+<img src="/figures/UniversalDataGraph.png" />
+
 ## Download
 Download this repository and the `EnergyTransitionTasks` one to your home directory.
 The `EnergyTransitionTasks` repository contains the datasets we use here:
