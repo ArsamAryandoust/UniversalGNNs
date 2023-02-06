@@ -9,7 +9,7 @@ that is shared across all tasks, while the design of the other components depend
 <img src="/figures/UniversalDataGraph.png" />
 
 
-## Download
+### Download
 Download this repository and the `EnergyTransitionTasks` one to your home directory.
 The `EnergyTransitionTasks` repository contains the datasets we use here:
 
@@ -21,7 +21,7 @@ cd UniversalGNNs
 ```
 
 
-## Docker
+### Docker
 The easiest way to build and run the Docker container is with the `build_and_run.sh` script inside the `UniversalGNNs` folder.
 To do this, execute the following command:
 
@@ -30,7 +30,7 @@ To do this, execute the following command:
 ```
 
 
-## Experiments
+### Experiments
 All the models (included the baselines) can be trained from the `main.py` file inside of the `src` folder. 
 The easiest way to do so is to start the Docker container built as above and inside of it run:
 
@@ -46,3 +46,18 @@ python3 src/main.py -climart --train_single
 ```
 
 All the configurations reguarging how the models are trained are found inside the `config.yaml` file.
+
+
+### Contributions
+
+Your contribution is highly appreciated. For this, download the repo, create a new 
+branch off of latest\_release, and give it a <new branch name>. After making changes
+to code and/or adding new functionalities, create your pull request to latest\_release.
+
+```
+git clone https://github.com/ArsamAryandoust/UniversalGNNs.git
+cd UniversalGNNs
+checkout latest_release
+branch <new branch name>
+```
+
