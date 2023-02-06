@@ -51,7 +51,7 @@ All the configurations reguarging how the models are trained are found inside th
 ### Contributions
 
 Your contribution is highly appreciated. For this, download the repo, create a new 
-branch off of latest\_release, and give it a <new branch name>. After making changes
+branch off of latest\_release, and give it a \<new branch name\>. After making changes
 to code and/or adding new functionalities, create your pull request to latest\_release.
 
 ```
