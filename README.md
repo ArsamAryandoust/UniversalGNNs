@@ -50,14 +50,9 @@ All the configurations reguarging how the models are trained are found inside th
 
 ### Contributions
 
-Your contribution is highly appreciated. For this, download the repo, create a new 
-branch off of latest\_release, and give it a \<new branch name\>. After making changes
-to code and/or adding new functionalities, create your pull request to latest\_release.
-
-```
-git clone https://github.com/ArsamAryandoust/UniversalGNNs.git
-cd UniversalGNNs
-checkout latest_release
-branch <new branch name>
-```
+Contributions are highly appreciated. If you find anything we can improve, please
+go to the Discussions tab and create a New discussion, where you describe your suggestion.
+For changes to code, download the repo, create a new branch off of latest\_release, 
+and give it a new branch name. After making changes to code and/or adding new 
+functionalities, push your code to the repo and create your pull request to latest\_release.
 
