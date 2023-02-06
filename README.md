@@ -8,6 +8,7 @@ that is shared across all tasks, while the design of the other components depend
 
 <img src="/figures/UniversalDataGraph.png" />
 
+
 ## Download
 Download this repository and the `EnergyTransitionTasks` one to your home directory.
 The `EnergyTransitionTasks` repository contains the datasets we use here:
@@ -19,6 +20,7 @@ git clone https://github.com/ArsamAryandoust/EnergyTransitionTasks.git
 cd UniversalGNNs
 ```
 
+
 ## Docker
 The easiest way to build and run the Docker container is with the `build_and_run.sh` script inside the `UniversalGNNs` folder.
 To do this, execute the following command:
@@ -26,6 +28,7 @@ To do this, execute the following command:
 ```
 ./build_and_run.sh
 ```
+
 
 ## Experiments
 All the models (included the baselines) can be trained from the `main.py` file inside of the `src` folder. 
