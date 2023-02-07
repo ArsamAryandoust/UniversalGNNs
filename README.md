@@ -1,3 +1,5 @@
+<img src="https://img.shields.io/badge/contributors-3-blue"/> <img src="https://img.shields.io/badge/experiments-2-blue"/>
+
 # Universal graph neural networks for multi-task transfer learning
 
 
