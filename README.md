@@ -1,4 +1,4 @@
-# Universal graph neural networks for multi-task learning
+# Universal graph neural networks for multi-task transfer learning
 
 
 Given arbitrary prediction tasks and datasets, we want to train a single DL model that is able to solve them all. 
