@@ -1,4 +1,4 @@
-<img src="https://img.shields.io/badge/contributors-3-blue"/> <img src="https://img.shields.io/badge/experiments-2-blue"/>
+<img src="https://img.shields.io/badge/experiments-2-blue"/>
 
 # Universal graph neural networks for multi-task transfer learning
 
@@ -11,7 +11,7 @@ that is shared across all tasks, while the design of the other components depend
 <img src="/figures/UniversalDataGraph.png" />
 
 
-### Download
+### Getting started
 Download this repository and the `EnergyTransitionTasks` one to your home directory.
 The `EnergyTransitionTasks` repository contains the datasets we use here:
 
