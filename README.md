@@ -2,13 +2,9 @@
 
 # Universal graph neural networks for multi-task transfer learning
 
-
-Given arbitrary prediction tasks and datasets, we want to train a single DL model that is able to solve them all. 
-We propose a model that we call **UniversalGNN** for this, which is composed of four different components: 
-an auto-encoder, a graph builder, a backbone GNN and a final regressor or classifier. The backbone GNN is the only component 
-that is shared across all tasks, while the design of the other components depends on the individual tasks such that we create one for each dataset.
-
 <img src="/figures/UniversalDataGraph.png" />
+
+A fundamental research question that arises from the recent development of universal deep learning models like Gato or ChatGPT, is whether such models are also suitable for tackling important climate change related prediction problems. We design the UniversalGNN model for this with an emphasis on handling climate change related themes such as spatio-temporal data. We argue that our UniversalGNN is able to solve arbitrary prediction tasks using arbitrary non-iid data, and demonstrate the performance of a first simple implementation of it on three prediction tasks that are important for enhancing the global energy transition. We find that our current model has theoretical properties that can be improved and that its implementation is not yet able to benefit from transfer learning across different domains and tasks or yet perform consistently better than task-specific but simple multi-layer perceptrons. We propose multiple improvements to enhance the theoretical properties and implementation of our UniversalGNN, and to increase the general reliability and applicability of our experiments.
 
 
 ### Getting started
