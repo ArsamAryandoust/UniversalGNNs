@@ -88,6 +88,12 @@ class MultiDatasetBatchSampler(Sampler):
         self.sequential = sequential
         self.generator = torch.Generator()
 
+    def __len__(self) -> int:
+        if self.sequential:
+            return self.multidataset.num_samples // self.batch_size + int(not self.drop_last)
+        else:
+            return self.num_batches_per_epoch
+
     def __iter__(self) -> Iterator[int]:
 
         if self.sequential:

@@ -141,12 +141,15 @@ def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], gra
                 autoencoder.set_edge_level_graphbuilder(graphbuilders[dataset_name])
             print("Loaded autoencoder checkpoint in: ", savefile_path)
         else:
-            print("Training new autoencoder and saving in: ", savefile_path)
-            savefile_path.parent.mkdir(parents=True, exist_ok=True)
-            train_autoencoder(config, autoencoder, train_dataset, validation_dataset)
-            torch.save(autoencoder.state_dict(), savefile_path)
+            if config["train_self_supervised"]:
+                print("Training new autoencoder and saving in: ", savefile_path)
+                savefile_path.parent.mkdir(parents=True, exist_ok=True)
+                train_autoencoder(config, autoencoder, train_dataset, validation_dataset)
+                torch.save(autoencoder.state_dict(), savefile_path)
         
-        autoencoder.requires_grad_(False)
+        if not config["train_e2e"]:
+            autoencoder.requires_grad_(False)
+
         autoencoders_dict[dataset_name] = autoencoder
         graphbuilders[dataset_name].set_encoder(autoencoder)
 

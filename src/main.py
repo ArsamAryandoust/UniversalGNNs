@@ -30,6 +30,9 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--train_universal",
                         help="Train the datasets on the UniversalGNN models all together.",
                         action="store_true")
+    
+    # logger
+    parser.add_argument("--nolog", help="Disable run logging (currently on wandb).", action="store_true")
 
     args = parser.parse_args()
 
@@ -46,20 +49,22 @@ def parse_arguments() -> argparse.Namespace:
         print("Must select one model to train!")
         exit(1)
 
+    args.log_run = not args.nolog
+
     return args
 
 
 if __name__ == "__main__":
 
     args = parse_arguments()
-    with open("config.yaml", "r") as configfile:
+    with open("config-defaults.yaml", "r") as configfile:
         config = yaml.safe_load(configfile)
 
     datasets = load_datasets(args)
 
     # if we want to run the baselines then do it
     if args.baselines:
-        train_baselines(config["baselines"], datasets, args.RF, args.GB, args.MLP)
+        train_baselines(config["baselines"], datasets, args.RF, args.GB, args.MLP, args.log_run)
 
     # if we want to use the GNN we need to load the encoders, graphbuilders and regressors
     if args.train_single or args.train_universal:
@@ -67,9 +72,9 @@ if __name__ == "__main__":
         autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict)
         if args.train_single:
             regressors_dict = load_regressors(config["regressors"], datasets)
-            train_single(config["train_single"], datasets, autoencoders_dict, graphbuilders_dict, regressors_dict)
+            train_single(config["train_single"], datasets, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
         if args.train_universal:
             # must first load the multidataset data loaders
             regressors_dict = load_regressors(config["regressors"], datasets)
             data_loaders = load_multidatasets(config["train_universal"], datasets)
-            train_universal(config["train_universal"], data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict)
+            train_universal(config["train_universal"], data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)

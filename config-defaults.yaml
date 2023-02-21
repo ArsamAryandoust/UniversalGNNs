@@ -18,6 +18,8 @@ encoders:
     max_steps: 200_000
     latent_dim: 512
     load_checkpoint: true
+    train_self_supervised: false
+    train_e2e: true
 
 graphbuilders:
     connectivity: 0.001
