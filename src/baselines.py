@@ -53,7 +53,7 @@ def GradBoostRegressor(train_data, test_data, seed):
 #####################################
 #               MLP                 #
 #####################################
-def MLPRegressor(config: dict[str], dataset_name: str, multisplit_dataset: MultiSplitDataset):
+def MLPRegressor(config: dict[str], dataset_name: str, multisplit_dataset: MultiSplitDataset, log_run: bool):
     """ """
     use_random_sampler = config["use_random_sampler"]
     batch_size = config["batch_size"]
@@ -71,10 +71,14 @@ def MLPRegressor(config: dict[str], dataset_name: str, multisplit_dataset: Multi
         validation_loader = DataLoader(validation_dataset, batch_size=batch_size, num_workers=128, shuffle=False)
         test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=128, shuffle=False)
     mlp = MLP(input_dim, [512, 256, 256], label_dim, dropout)
-    logger = WandbLogger(dir=f"./logs/{dataset_name}/",
-                         project="UniversalGNNs",
-                         tags=["BASELINE", "MLP", dataset_name])
-    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=epochs, log_every_n_steps=100, logger=logger)
+    if log_run:
+        logger = WandbLogger(dir=f"./logs/{dataset_name}/",
+                            project="UniversalGNNs",
+                            tags=["BASELINE", "MLP", dataset_name], config=config)
+        
+    else:
+        logger = False
+    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=epochs, log_every_n_steps=100, logger=logger, enable_checkpointing=False)
     trainer.fit(mlp, train_loader, validation_loader)
 
     score = trainer.test(mlp, test_loader)

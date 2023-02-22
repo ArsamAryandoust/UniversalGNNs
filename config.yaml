@@ -11,13 +11,15 @@ baselines:
         dropout: 0
 
 encoders:
-    encoder_class: "AutoEncoder"
+    encoder_class: "VAE"
     save_path: "/UniversalGNNs/checkpoints/encoders/"
     batch_size: 1024
     max_epochs: 1
     max_steps: 200_000
     latent_dim: 512
     load_checkpoint: true
+    train_self_supervised: true
+    train_e2e: true
 
 graphbuilders:
     connectivity: 0.001
