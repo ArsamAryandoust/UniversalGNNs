@@ -92,7 +92,7 @@ class MultiDatasetBatchSampler(Sampler):
         if self.sequential:
             return self.multidataset.num_samples // self.batch_size + int(not self.drop_last)
         else:
-            return self.num_batches_per_epoch
+            return self.multidataset.num_samples // self.batch_size
 
     def __iter__(self) -> Iterator[int]:
 

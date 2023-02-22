@@ -113,7 +113,7 @@ def load_graphbuilders(config: dict[str], datasets: dict[str, MultiSplitDataset]
     return graphbuilders_dict
 
 
-def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], graphbuilders: dict[str, GraphBuilder]) -> dict[str, nn.Module]:
+def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], graphbuilders: dict[str, GraphBuilder], log_run: bool) -> dict[str, nn.Module]:
     """
     Loads or trains the autoencoders for all datasets. 
     Returns the encoders dict where encoders_dict["dataset_name"] == encoder
@@ -144,7 +144,7 @@ def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], gra
             if config["train_self_supervised"]:
                 print("Training new autoencoder and saving in: ", savefile_path)
                 savefile_path.parent.mkdir(parents=True, exist_ok=True)
-                train_autoencoder(config, autoencoder, train_dataset, validation_dataset)
+                train_autoencoder(config, autoencoder, train_dataset, validation_dataset, log_run)
                 torch.save(autoencoder.state_dict(), savefile_path)
         
         if not config["train_e2e"]:

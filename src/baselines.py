@@ -74,7 +74,7 @@ def MLPRegressor(config: dict[str], dataset_name: str, multisplit_dataset: Multi
     if log_run:
         logger = WandbLogger(dir=f"./logs/{dataset_name}/",
                             project="UniversalGNNs",
-                            tags=["BASELINE", "MLP", dataset_name])
+                            tags=["BASELINE", "MLP", dataset_name], config=config)
         
     else:
         logger = False

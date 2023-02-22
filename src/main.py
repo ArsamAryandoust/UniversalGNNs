@@ -57,7 +57,7 @@ def parse_arguments() -> argparse.Namespace:
 if __name__ == "__main__":
 
     args = parse_arguments()
-    with open("config-defaults.yaml", "r") as configfile:
+    with open("config.yaml", "r") as configfile:
         config = yaml.safe_load(configfile)
 
     datasets = load_datasets(args)
@@ -69,12 +69,12 @@ if __name__ == "__main__":
     # if we want to use the GNN we need to load the encoders, graphbuilders and regressors
     if args.train_single or args.train_universal:
         graphbuilders_dict = load_graphbuilders(config["graphbuilders"], datasets)
-        autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict)
+        autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict, args.log_run)
         if args.train_single:
             regressors_dict = load_regressors(config["regressors"], datasets)
-            train_single(config["train_single"], datasets, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
+            train_single(config, datasets, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
         if args.train_universal:
             # must first load the multidataset data loaders
             regressors_dict = load_regressors(config["regressors"], datasets)
             data_loaders = load_multidatasets(config["train_universal"], datasets)
-            train_universal(config["train_universal"], data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
+            train_universal(config, data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
