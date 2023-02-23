@@ -67,14 +67,16 @@ if __name__ == "__main__":
         train_baselines(config["baselines"], datasets, args.RF, args.GB, args.MLP, args.log_run)
 
     # if we want to use the GNN we need to load the encoders, graphbuilders and regressors
-    if args.train_single or args.train_universal:
+    if args.train_single:
         graphbuilders_dict = load_graphbuilders(config["graphbuilders"], datasets)
         autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict, args.log_run)
-        if args.train_single:
-            regressors_dict = load_regressors(config["regressors"], datasets)
-            train_single(config, datasets, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
-        if args.train_universal:
-            # must first load the multidataset data loaders
-            regressors_dict = load_regressors(config["regressors"], datasets)
-            data_loaders = load_multidatasets(config["train_universal"], datasets)
-            train_universal(config, data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
+        regressors_dict = load_regressors(config["regressors"], datasets)
+        train_single(config, datasets, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
+    
+    if args.train_universal:
+        graphbuilders_dict = load_graphbuilders(config["graphbuilders"], datasets)
+        autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict, args.log_run)
+        regressors_dict = load_regressors(config["regressors"], datasets)
+        # must first load the multidataset data loaders
+        data_loaders = load_multidatasets(config["train_universal"], datasets)
+        train_universal(config, data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)

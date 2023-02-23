@@ -129,7 +129,7 @@ def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], gra
     for dataset_name, multidataset in datasets.items():
         train_dataset, validation_dataset, _ = multidataset.get_splits()
         if train_dataset.edge_level:
-            autoencoder = encoder_class(train_dataset.encoder_input_dim, config["latent_dim"])
+            autoencoder : AutoEncoder | VAE = encoder_class(train_dataset.encoder_input_dim, config["latent_dim"])
             autoencoder.set_edge_level_graphbuilder(graphbuilders[dataset_name])
         else:
             autoencoder = encoder_class(train_dataset.input_dim, config["latent_dim"])

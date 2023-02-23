@@ -24,7 +24,7 @@ class GNN(nn.Module):
             norm = LayerNorm(hidden_channels)
             deeplayers_list.append((DeepGCNLayer(conv, norm, self.act), 'x, edge_index, edge_weight -> x'))
         self.hidden_deeplayers = Sequential('x, edge_index, edge_weight', deeplayers_list)
-        self.out_deeplayer = DeepGCNLayer(self.out_conv, self.out_norm, self.act)
+        self.out_deeplayer = DeepGCNLayer(self.out_conv, self.out_norm, nn.Identity())
 
     def forward(self, node_matrix: torch.Tensor, edge_index: torch.Tensor, edge_weights) -> torch.Tensor:
         # x: Node feature matrix of shape [num_nodes, in_channels]
