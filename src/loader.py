@@ -11,18 +11,18 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 
-def load_datasets(args) -> dict[str, MultiSplitDataset]:
+def load_datasets(args: dict) -> dict[str, MultiSplitDataset]:
     """
     Loads the datasets specified in the args and returns a dict with datasets["dataset_name"] == MultisplitDataset(dataset_class)
     """
     print("Loading datasets...")
 
     datasets_list = []
-    if args.climart:
+    if args["all_datasets"] or args["climart"]:
         datasets_list.append(ClimARTDataset)
-    if args.uber:
+    if args["all_datasets"] or args["uber"]:
         datasets_list.append(UberMovementDataset)
-    if args.BE:
+    if args["all_datasets"] or args["BE"]:
         datasets_list.append(BuildingElectricityDataset)
     
     datasets = {}
