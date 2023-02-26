@@ -11,18 +11,18 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 
-def load_datasets(args) -> dict[str, MultiSplitDataset]:
+def load_datasets(args: dict) -> dict[str, MultiSplitDataset]:
     """
     Loads the datasets specified in the args and returns a dict with datasets["dataset_name"] == MultisplitDataset(dataset_class)
     """
     print("Loading datasets...")
 
     datasets_list = []
-    if args.climart:
+    if args["all_datasets"] or args["climart"]:
         datasets_list.append(ClimARTDataset)
-    if args.uber:
+    if args["all_datasets"] or args["uber"]:
         datasets_list.append(UberMovementDataset)
-    if args.BE:
+    if args["all_datasets"] or args["BE"]:
         datasets_list.append(BuildingElectricityDataset)
     
     datasets = {}
@@ -129,7 +129,7 @@ def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], gra
     for dataset_name, multidataset in datasets.items():
         train_dataset, validation_dataset, _ = multidataset.get_splits()
         if train_dataset.edge_level:
-            autoencoder = encoder_class(train_dataset.encoder_input_dim, config["latent_dim"])
+            autoencoder : AutoEncoder | VAE = encoder_class(train_dataset.encoder_input_dim, config["latent_dim"])
             autoencoder.set_edge_level_graphbuilder(graphbuilders[dataset_name])
         else:
             autoencoder = encoder_class(train_dataset.input_dim, config["latent_dim"])
