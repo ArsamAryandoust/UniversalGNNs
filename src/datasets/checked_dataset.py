@@ -31,7 +31,9 @@ class CheckedDataset(ABC, Dataset):
         num_removed = torch.count_nonzero(mask)
         if num_removed != 0:
             print("Removed", int(num_removed), message)
+            print("Indices:", mask.nonzero().flatten())
         return tensor
+
 
     def _sanitize(self):
         """

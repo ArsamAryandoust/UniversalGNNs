@@ -11,18 +11,18 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 
-def load_datasets(args) -> dict[str, MultiSplitDataset]:
+def load_datasets(args: dict) -> dict[str, MultiSplitDataset]:
     """
     Loads the datasets specified in the args and returns a dict with datasets["dataset_name"] == MultisplitDataset(dataset_class)
     """
     print("Loading datasets...")
 
     datasets_list = []
-    if args.climart:
+    if args["all_datasets"] or args["climart"]:
         datasets_list.append(ClimARTDataset)
-    if args.uber:
+    if args["all_datasets"] or args["uber"]:
         datasets_list.append(UberMovementDataset)
-    if args.BE:
+    if args["all_datasets"] or args["BE"]:
         datasets_list.append(BuildingElectricityDataset)
     
     datasets = {}
@@ -113,7 +113,7 @@ def load_graphbuilders(config: dict[str], datasets: dict[str, MultiSplitDataset]
     return graphbuilders_dict
 
 
-def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], graphbuilders: dict[str, GraphBuilder]) -> dict[str, nn.Module]:
+def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], graphbuilders: dict[str, GraphBuilder], log_run: bool) -> dict[str, nn.Module]:
     """
     Loads or trains the autoencoders for all datasets. 
     Returns the encoders dict where encoders_dict["dataset_name"] == encoder
@@ -129,7 +129,7 @@ def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], gra
     for dataset_name, multidataset in datasets.items():
         train_dataset, validation_dataset, _ = multidataset.get_splits()
         if train_dataset.edge_level:
-            autoencoder = encoder_class(train_dataset.encoder_input_dim, config["latent_dim"])
+            autoencoder : AutoEncoder | VAE = encoder_class(train_dataset.encoder_input_dim, config["latent_dim"])
             autoencoder.set_edge_level_graphbuilder(graphbuilders[dataset_name])
         else:
             autoencoder = encoder_class(train_dataset.input_dim, config["latent_dim"])
@@ -141,12 +141,15 @@ def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], gra
                 autoencoder.set_edge_level_graphbuilder(graphbuilders[dataset_name])
             print("Loaded autoencoder checkpoint in: ", savefile_path)
         else:
-            print("Training new autoencoder and saving in: ", savefile_path)
-            savefile_path.parent.mkdir(parents=True, exist_ok=True)
-            train_autoencoder(config, autoencoder, train_dataset, validation_dataset)
-            torch.save(autoencoder.state_dict(), savefile_path)
+            if config["train_self_supervised"]:
+                print("Training new autoencoder and saving in: ", savefile_path)
+                savefile_path.parent.mkdir(parents=True, exist_ok=True)
+                train_autoencoder(config, autoencoder, train_dataset, validation_dataset, log_run)
+                torch.save(autoencoder.state_dict(), savefile_path)
         
-        autoencoder.requires_grad_(False)
+        if not config["train_e2e"]:
+            autoencoder.requires_grad_(False)
+
         autoencoders_dict[dataset_name] = autoencoder
         graphbuilders[dataset_name].set_encoder(autoencoder)
 

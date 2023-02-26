@@ -18,6 +18,7 @@ def parse_arguments() -> argparse.Namespace:
                         First specify the dataset(s) to use, then the experiments to run on them.
                         """)
     # datasets
+    parser.add_argument("-all_datasets", help="add all the available datasets", action="store_true")
     parser.add_argument("-climart", help="add the ClimART dataset", action="store_true")
     parser.add_argument("-uber", help="add the UberMovement dataset", action="store_true")
     parser.add_argument("-BE", help="add the BuildingElectricity dataset", action="store_true")
@@ -30,11 +31,14 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--train_universal",
                         help="Train the datasets on the UniversalGNN models all together.",
                         action="store_true")
+    
+    # logger
+    parser.add_argument("--nolog", help="Disable run logging (currently on wandb).", action="store_true")
 
     args = parser.parse_args()
 
     # do some checks for  validity of args
-    if not (args.climart or args.uber or args.BE):
+    if not (args.all_datasets or args.climart or args.uber or args.BE):
         print("Must select at least one dataset!")
         exit(1)
     if args.RF or args.GB or args.MLP:
@@ -46,6 +50,8 @@ def parse_arguments() -> argparse.Namespace:
         print("Must select one model to train!")
         exit(1)
 
+    args.log_run = not args.nolog
+
     return args
 
 
@@ -55,21 +61,23 @@ if __name__ == "__main__":
     with open("config.yaml", "r") as configfile:
         config = yaml.safe_load(configfile)
 
-    datasets = load_datasets(args)
+    datasets = load_datasets(vars(args))
 
     # if we want to run the baselines then do it
     if args.baselines:
-        train_baselines(config["baselines"], datasets, args.RF, args.GB, args.MLP)
+        train_baselines(config["baselines"], datasets, args.RF, args.GB, args.MLP, args.log_run)
 
     # if we want to use the GNN we need to load the encoders, graphbuilders and regressors
-    if args.train_single or args.train_universal:
+    if args.train_single:
         graphbuilders_dict = load_graphbuilders(config["graphbuilders"], datasets)
-        autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict)
-        if args.train_single:
-            regressors_dict = load_regressors(config["regressors"], datasets)
-            train_single(config["train_single"], datasets, autoencoders_dict, graphbuilders_dict, regressors_dict)
-        if args.train_universal:
-            # must first load the multidataset data loaders
-            regressors_dict = load_regressors(config["regressors"], datasets)
-            data_loaders = load_multidatasets(config["train_universal"], datasets)
-            train_universal(config["train_universal"], data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict)
+        autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict, args.log_run)
+        regressors_dict = load_regressors(config["regressors"], datasets)
+        train_single(config, datasets, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
+    
+    if args.train_universal:
+        graphbuilders_dict = load_graphbuilders(config["graphbuilders"], datasets)
+        autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict, args.log_run)
+        regressors_dict = load_regressors(config["regressors"], datasets)
+        # must first load the multidataset data loaders
+        data_loaders = load_multidatasets(config["train_universal"], datasets)
+        train_universal(config, data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)

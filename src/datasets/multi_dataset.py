@@ -88,6 +88,12 @@ class MultiDatasetBatchSampler(Sampler):
         self.sequential = sequential
         self.generator = torch.Generator()
 
+    def __len__(self) -> int:
+        if self.sequential:
+            return self.multidataset.num_samples // self.batch_size + int(not self.drop_last)
+        else:
+            return self.num_batches_per_epoch
+
     def __iter__(self) -> Iterator[int]:
 
         if self.sequential:
@@ -135,3 +141,17 @@ class MultiDatasetBatchSampler(Sampler):
         # batch_samples = generator.integers(0, self.multidataset.dataset_lengths[dataset_idx], size=self.batch_size, dtype=np.int64)
         batch_samples += self.multidataset.dataset_offsets[dataset_idx]
         return batch_samples
+
+
+def _test():
+    from loader import load_datasets, load_multidatasets
+    sets = {
+        "all_datasets": True
+    }
+    datasets = load_datasets(sets)
+    config = {
+        "batch_size": 1024,
+        "batches_per_epoch": 1000,
+        "drop_last": True
+    }
+    load_multidatasets(config, datasets)
