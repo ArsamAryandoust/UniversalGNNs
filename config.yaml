@@ -14,7 +14,7 @@ encoders:
     encoder_class: "VAE"
     save_path: "/UniversalGNNs/checkpoints/encoders/"
     batch_size: 1024
-    max_epochs: 1
+    max_epochs: 30
     max_steps: 200_000
     latent_dim: 512
     load_checkpoint: true
@@ -27,7 +27,7 @@ graphbuilders:
 
 regressors:
     latent_dim: 512
-    use_mlp: true
+    use_mlp: false
 
 train_single:
     latent_dim: 512

@@ -106,7 +106,7 @@ class AutoEncoder(BaseEncoder):
 # for now using an MLP as encoder and decoder
 class VariationalEncoder(BaseEncoder):
 
-    def __init__(self, input_dim: int, hidden_dim: int, latent_dim: int):
+    def __init__(self, input_dim: int, hidden_dim: int, latent_dim: int, cuda:bool=True):
         super().__init__()
         self.linear1 = nn.Linear(input_dim, hidden_dim)
         self.linear2 = nn.Linear(hidden_dim, hidden_dim)
@@ -115,8 +115,9 @@ class VariationalEncoder(BaseEncoder):
 
         self.N = torch.distributions.Normal(0, 1)
         # sample on the gpu
-        self.N.loc = self.N.loc.cuda()
-        self.N.scale = self.N.scale.cuda()
+        if cuda:
+            self.N.loc = self.N.loc.cuda()
+            self.N.scale = self.N.scale.cuda()
         self.kl = 0
 
     def forward(self, x):
@@ -146,12 +147,12 @@ class VariationalEncoder(BaseEncoder):
 
 class VAE(BaseEncoder):
 
-    def __init__(self, input_dim: int, latent_dim: int):
+    def __init__(self, input_dim: int, latent_dim: int, cuda: bool=True):
         super().__init__()
         self.save_hyperparameters()
 
         self.hidden_dim = (input_dim + latent_dim) // 2
-        self.encoder = VariationalEncoder(input_dim, self.hidden_dim, latent_dim)
+        self.encoder = VariationalEncoder(input_dim, self.hidden_dim, latent_dim, cuda)
         self.decoder = Decoder(latent_dim, self.hidden_dim, input_dim)
 
     def forward(self, x):
