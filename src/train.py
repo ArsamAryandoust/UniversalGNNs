@@ -12,7 +12,8 @@ from models import UniversalGNN
 import baselines
 
 
-def train_baselines(config, datasets: dict[str, MultiSplitDataset], train_rf: bool, train_gb: bool, train_mlp: bool, log_run: bool):
+def train_baselines(config, datasets: dict[str, MultiSplitDataset], train_rf: bool, train_gb: bool, train_mlp: bool,
+                    log_run: bool):
     """
     Trains the specified baseline models on the datasets provided.
     """
@@ -43,8 +44,8 @@ def save_baseline_results(results_path, dataset_name, experiment_name, score):
         f.write(str(score))
 
 
-def train_autoencoder(config: dict, autoencoder: nn.Module, train_dataset: CheckedDataset,
-                      val_dataset: CheckedDataset, log_run: bool) -> nn.Module:
+def train_autoencoder(config: dict, autoencoder: nn.Module, train_dataset: CheckedDataset, val_dataset: CheckedDataset,
+                      log_run: bool) -> nn.Module:
     """
     Trains a new AutoEncoder/VAE on the datasets provided.
     """
@@ -52,13 +53,19 @@ def train_autoencoder(config: dict, autoencoder: nn.Module, train_dataset: Check
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=0)
     val_loader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=0)
 
-    if log_run:
-        logger = WandbLogger(dir=f"./logs/{train_loader.dataset.__class__.__name__}/",
+    logger = WandbLogger(save_dir=f"./logs/{train_loader.dataset.__class__.__name__}/",
                          project="UniversalGNNs",
-                         tags=["ENCODER", train_loader.dataset.__class__.__name__, str(config["latent_dim"])], config=config)
-    else:
-        logger=False
-    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=config["max_epochs"], log_every_n_steps=10, logger=logger, max_steps=config["max_steps"], enable_checkpointing=False)
+                         tags=["ENCODER", train_loader.dataset.__class__.__name__,
+                               str(config["latent_dim"])],
+                         config=config,
+                         mode="online" if log_run else "disabled")
+    trainer = pl.Trainer(devices=1,
+                         accelerator="gpu",
+                         max_epochs=config["max_epochs"],
+                         log_every_n_steps=10,
+                         logger=logger,
+                         max_steps=config["max_steps"],
+                         enable_checkpointing=False)
     trainer.fit(autoencoder, train_loader, val_loader)
     wandb.finish()
 
@@ -85,16 +92,15 @@ def train_single(config_all: dict[str], datasets: dict[str, MultiSplitDataset], 
         model = UniversalGNN(latent_dim, latent_dim, latent_dim, config["n_layers"], autoencoder, graphbuilder, regressor)
 
         # train the GNN
-        if log_run:
-            logger = WandbLogger(dir="./logs/UniversalGNN/",
+        logger = WandbLogger(save_dir="./logs/UniversalGNN_single/",
                              project="UniversalGNNs",
-                             tags=["UNIVERSALGNN", str(latent_dim), dataset_name], config=config_all)
-        else:
-            logger = False
+                             tags=["UNIVERSALGNN", str(latent_dim), dataset_name],
+                             config=config_all,
+                             mode="online" if log_run else "disabled")
         if config["use_random_sampler"]:
             from loader import load_multidatasets
             print(f"Training UniversalGNN single on {dataset_name} using random sampler!")
-            train_loader, val_loader, test_loader = load_multidatasets(config, datasets={dataset_name:dataset})
+            train_loader, val_loader, test_loader = load_multidatasets(config, datasets={dataset_name: dataset})
             trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=config["epochs"], log_every_n_steps=50, logger=logger)
         else:
             print(f"Training UniversalGNN single on {dataset_name} using standard data loader!")
@@ -102,15 +108,21 @@ def train_single(config_all: dict[str], datasets: dict[str, MultiSplitDataset], 
             train_loader = DataLoader(train_split, batch_size=config["batch_size"], shuffle=True, num_workers=0)
             val_loader = DataLoader(validation_split, batch_size=config["batch_size"], shuffle=False, num_workers=0)
             test_loader = DataLoader(test_split, batch_size=config["batch_size"], shuffle=False, num_workers=0)
-            trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=config["epochs"], max_steps=config["max_steps"], log_every_n_steps=50, logger=logger, enable_checkpointing=False)
+            trainer = pl.Trainer(devices=1,
+                                 accelerator="gpu",
+                                 max_epochs=config["epochs"],
+                                 max_steps=config["max_steps"],
+                                 log_every_n_steps=50,
+                                 logger=logger,
+                                 enable_checkpointing=False)
         trainer.fit(model, train_loader, val_loader)
         trainer.test(model, test_loader)
         wandb.finish()
 
 
-def train_universal(config_all: dict[dict[str]], loaders: tuple[DataLoader, DataLoader, DataLoader], autoencoders_dict: dict[str,
-                                                                                                                   nn.Module],
-                    graphbuilders_dict: dict[str, GraphBuilder], regressors_dict: dict[str, nn.Module], log_run: bool):
+def train_mutual(config_all: dict[dict[str]], loaders: tuple[DataLoader, DataLoader,
+                                                             DataLoader], autoencoders_dict: dict[str, nn.Module],
+                 graphbuilders_dict: dict[str, GraphBuilder], regressors_dict: dict[str, nn.Module], log_run: bool):
     """ """
     train_loader, val_loader, test_loader = loaders
     config = config_all["train_universal"]
@@ -122,11 +134,17 @@ def train_universal(config_all: dict[dict[str]], loaders: tuple[DataLoader, Data
 
     # train the GNN
     datasets_str = [d for d in autoencoders_dict.keys()]
-    if log_run:
-        logger = WandbLogger(dir="./logs/UniversalGNN/", project="UniversalGNNs", tags=["UNIVERSALGNN", str(latent_dim)] + datasets_str, config=config_all)
-    else:
-        logger = False
-    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=config["epochs"], log_every_n_steps=50, logger=logger, enable_checkpointing=False)
+    logger = WandbLogger(save_dir="./logs/UniversalGNN_mutual/",
+                         project="UniversalGNNs",
+                         tags=["UNIVERSALGNN", str(latent_dim)] + datasets_str,
+                         config=config_all,
+                         mode="online" if log_run else "disabled")
+    trainer = pl.Trainer(devices=1,
+                         accelerator="gpu",
+                         max_epochs=config["epochs"],
+                         log_every_n_steps=50,
+                         logger=logger,
+                         enable_checkpointing=False)
     trainer.fit(model, train_loader, val_loader)
     trainer.test(model, test_loader)
     wandb.finish()
