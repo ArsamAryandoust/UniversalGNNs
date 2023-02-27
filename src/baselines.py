@@ -65,20 +65,23 @@ def MLPRegressor(config: dict[str], dataset_name: str, multisplit_dataset: Multi
 
     if use_random_sampler:
         from loader import load_multidatasets
-        train_loader, validation_loader, test_loader = load_multidatasets(config, {"dataset":multisplit_dataset})
+        train_loader, validation_loader, test_loader = load_multidatasets(config, {"dataset": multisplit_dataset})
     else:
         train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=128, shuffle=True)
         validation_loader = DataLoader(validation_dataset, batch_size=batch_size, num_workers=128, shuffle=False)
         test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=128, shuffle=False)
     mlp = MLP(input_dim, [512, 256, 256], label_dim, dropout)
-    if log_run:
-        logger = WandbLogger(dir=f"./logs/{dataset_name}/",
-                            project="UniversalGNNs",
-                            tags=["BASELINE", "MLP", dataset_name], config=config)
-        
-    else:
-        logger = False
-    trainer = pl.Trainer(devices=1, accelerator="gpu", max_epochs=epochs, log_every_n_steps=100, logger=logger, enable_checkpointing=False)
+    logger = WandbLogger(save_dir=f"./logs/{dataset_name}/",
+                         project="UniversalGNNs",
+                         tags=["BASELINE", "MLP", dataset_name],
+                         config=config,
+                         mode="online" if log_run else "disabled")
+    trainer = pl.Trainer(devices=1,
+                         accelerator="gpu",
+                         max_epochs=epochs,
+                         log_every_n_steps=100,
+                         logger=logger,
+                         enable_checkpointing=False)
     trainer.fit(mlp, train_loader, validation_loader)
 
     score = trainer.test(mlp, test_loader)

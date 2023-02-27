@@ -1,5 +1,5 @@
 import argparse
-from train import train_single, train_universal, train_baselines
+from train import train_single, train_mutual, train_baselines
 from loader import load_datasets, load_multidatasets, load_encoders, load_graphbuilders, load_regressors
 import yaml
 
@@ -28,7 +28,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--GB", help="Train a Gradient Boosting model on the specified datasets.", action="store_true")
     parser.add_argument("--MLP", help="Train an MLP on the specified datasets.", action="store_true")
     parser.add_argument("--train_single", help="Train the datasets on the UniversalGNN model one at a time.", action="store_true")
-    parser.add_argument("--train_universal",
+    parser.add_argument("--train_mutual",
                         help="Train the datasets on the UniversalGNN models all together.",
                         action="store_true")
     
@@ -80,4 +80,4 @@ if __name__ == "__main__":
         regressors_dict = load_regressors(config["regressors"], datasets)
         # must first load the multidataset data loaders
         data_loaders = load_multidatasets(config["train_universal"], datasets)
-        train_universal(config, data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
+        train_mutual(config, data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
