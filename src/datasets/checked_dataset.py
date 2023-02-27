@@ -98,6 +98,7 @@ class CheckedDataset(ABC, Dataset):
         Normalize the input data over features and labels across all samples and check that the mean/std are not nan
         """
         X_mean, X_std, Y_mean, Y_std = self._get_normalization_values(self.data)
+        X, Y = self.data
         X = (X - X_mean) / X_std
         Y = (Y - Y_mean) / Y_std
         self.data = X, Y
@@ -129,6 +130,12 @@ class CheckedDataset(ABC, Dataset):
     def _set_input_label_dim(self):
         self.input_dim = self.data[0].shape[1]
         self.label_dim = self.data[1].shape[1]
+
+    def to(self, device: torch.device | str):
+        X, Y = self.data
+        X = X.to(device)
+        Y = Y.to(device)
+        self.data = X, Y
 
 if __name__ == "__main__":
     from datasets import ClimARTDataset

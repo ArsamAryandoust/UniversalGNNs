@@ -49,8 +49,8 @@ def train_autoencoder(config: dict, autoencoder: nn.Module, train_dataset: Check
     Trains a new AutoEncoder/VAE on the datasets provided.
     """
 
-    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=128)
-    val_loader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=128)
+    train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=0)
+    val_loader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=False, num_workers=0)
 
     if log_run:
         logger = WandbLogger(dir=f"./logs/{train_loader.dataset.__class__.__name__}/",
