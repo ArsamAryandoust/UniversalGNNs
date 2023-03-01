@@ -46,7 +46,7 @@ def parse_arguments() -> argparse.Namespace:
     else:
         args.baselines = False
 
-    if not (args.baselines or args.train_single or args.train_universal):
+    if not (args.baselines or args.train_single or args.train_mutual):
         print("Must select one model to train!")
         exit(1)
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
         regressors_dict = load_regressors(config["regressors"], datasets)
         train_single(config, datasets, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
     
-    if args.train_universal:
+    if args.train_mutual:
         graphbuilders_dict = load_graphbuilders(config["graphbuilders"], datasets)
         autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict, args.log_run)
         regressors_dict = load_regressors(config["regressors"], datasets)
