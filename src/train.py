@@ -82,6 +82,7 @@ def train_single(config_all: dict[str], datasets: dict[str, MultiSplitDataset], 
     """
     config = config_all["train_single"]
     latent_dim = config["latent_dim"]
+    use_mlp_backbone = config["use_mlp_backbone"]
 
     for dataset_name, dataset in datasets.items():
 
@@ -89,7 +90,7 @@ def train_single(config_all: dict[str], datasets: dict[str, MultiSplitDataset], 
         autoencoder = {dataset_name: autoencoders_dict[dataset_name]}
         graphbuilder = {dataset_name: graphbuilders_dict[dataset_name]}
         regressor = {dataset_name: regressors_dict[dataset_name]}
-        model = UniversalGNN(latent_dim, latent_dim, latent_dim, config["n_layers"], autoencoder, graphbuilder, regressor)
+        model = UniversalGNN(latent_dim, latent_dim, latent_dim, config["n_layers"], autoencoder, graphbuilder, regressor, use_mlp_backbone)
 
         # train the GNN
         logger = WandbLogger(save_dir="./logs/UniversalGNN_single/",
@@ -127,10 +128,12 @@ def train_mutual(config_all: dict[dict[str]], loaders: tuple[DataLoader, DataLoa
     train_loader, val_loader, test_loader = loaders
     config = config_all["train_universal"]
     latent_dim = config["latent_dim"]
+    use_mlp_backbone = config["use_mlp_backbone"]
+
 
     # create GNN
     model = UniversalGNN(latent_dim, latent_dim, latent_dim, config["n_layers"], autoencoders_dict, graphbuilders_dict,
-                         regressors_dict)
+                         regressors_dict, use_mlp_backbone)
 
     # train the GNN
     datasets_str = [d for d in autoencoders_dict.keys()]
