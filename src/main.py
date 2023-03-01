@@ -35,6 +35,8 @@ def parse_arguments() -> argparse.Namespace:
     # logger
     parser.add_argument("--nolog", help="Disable run logging (currently on wandb).", action="store_true")
 
+    parser.add_argument("--test", help="This is a test run: disable logging and models are trained only for a limited amount of steps.", action="store_true")
+
     args = parser.parse_args()
 
     # do some checks for  validity of args
@@ -46,13 +48,32 @@ def parse_arguments() -> argparse.Namespace:
     else:
         args.baselines = False
 
-    if not (args.baselines or args.train_single or args.train_universal):
+    if not (args.baselines or args.train_single or args.train_mutual):
         print("Must select one model to train!")
         exit(1)
 
+    if args.test:
+        args.nolog = True
     args.log_run = not args.nolog
 
     return args
+
+def set_test_config(config: dict) -> dict:
+    # mlp
+    config["baselines"]["mlp"]["epochs"] = 1
+    config["baselines"]["mlp"]["batches_per_epoch"] = 10
+
+    # encoders
+    config["encoders"]["max_steps"] = 10
+
+    # single
+    config["train_single"]["epochs"] = 1
+    config["train_single"]["batches_per_epoch"] = 10
+    config["train_single"]["max_steps"] = 10
+
+    # mutual
+    config["train_mutual"]["epochs"] = 1
+    config["train_mutual"]["batches_per_epoch"] = 10
 
 
 if __name__ == "__main__":
@@ -60,6 +81,10 @@ if __name__ == "__main__":
     args = parse_arguments()
     with open("config.yaml", "r") as configfile:
         config = yaml.safe_load(configfile)
+
+    # override some configs if the test flag is set
+    if args.test:
+        config = set_test_config(config)
 
     datasets = load_datasets(vars(args))
 
@@ -74,10 +99,10 @@ if __name__ == "__main__":
         regressors_dict = load_regressors(config["regressors"], datasets)
         train_single(config, datasets, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
     
-    if args.train_universal:
+    if args.train_mutual:
         graphbuilders_dict = load_graphbuilders(config["graphbuilders"], datasets)
         autoencoders_dict = load_encoders(config["encoders"], datasets, graphbuilders_dict, args.log_run)
         regressors_dict = load_regressors(config["regressors"], datasets)
         # must first load the multidataset data loaders
-        data_loaders = load_multidatasets(config["train_universal"], datasets)
+        data_loaders = load_multidatasets(config["train_mutual"], datasets)
         train_mutual(config, data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)

@@ -38,11 +38,13 @@ train_single:
     use_random_sampler: true
     batches_per_epoch: 330
     epochs: 100
+    use_mlp_backbone: false
 
-train_universal:
+train_mutual:
     latent_dim: 512
     batch_size: 1024
     batches_per_epoch: 1000
     drop_last: true
     epochs: 100
     n_layers: 4
+    use_mlp_backbone: false

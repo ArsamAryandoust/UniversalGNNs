@@ -6,6 +6,7 @@ import pytorch_lightning as pl
 from torch.optim import Adam
 from GraphBuilder import GraphBuilder
 from torchmetrics.functional import r2_score
+from models import MLP
 
 class GNN(nn.Module):
 
@@ -38,13 +39,17 @@ class GNN(nn.Module):
 class UniversalGNN(pl.LightningModule):
 
     def __init__(self, latent_dim: int, hidden_dim: int, out_dim: int, n_layers: int, autoencoders_dict: dict[str, nn.Module],
-                 graphbuilders_dict: dict[str, GraphBuilder], regressors_dict: dict[str, nn.Module]):
+                 graphbuilders_dict: dict[str, GraphBuilder], regressors_dict: dict[str, nn.Module], use_mlp_backbone:bool = False):
         super().__init__()
         self.save_hyperparameters()
-        self.gnn = GNN(latent_dim, hidden_dim, out_dim, n_layers)
         self.autoencoders = nn.ModuleDict(autoencoders_dict)
         self.graphbuilders = graphbuilders_dict
         self.regressors = nn.ModuleDict(regressors_dict)
+        self.use_mlp_backbone = use_mlp_backbone
+        if use_mlp_backbone:
+            self.backbone = MLP(latent_dim, [hidden_dim], out_dim)
+        else:
+            self.backbone = GNN(latent_dim, hidden_dim, out_dim, n_layers)
         if len(self.autoencoders) == 1:
             for dataset_name in self.autoencoders.keys():
                 self.default_dataset_name = dataset_name
@@ -52,7 +57,10 @@ class UniversalGNN(pl.LightningModule):
     def forward(self, x: torch.Tensor, dataset_name: str):
         batch_size = x.shape[0]
         nodes_matrix, edges_indeces, edges_weights = self.graphbuilders[dataset_name].compute_graph(x, self.device)
-        out = self.gnn(nodes_matrix, edges_indeces, edges_weights)
+        if self.use_mlp_backbone:
+            out = self.backbone(nodes_matrix)
+        else:
+            out = self.backbone(nodes_matrix, edges_indeces, edges_weights)
         if self.graphbuilders[dataset_name].edge_level_batch:
             source = out[:batch_size]
             target = out[batch_size:]
