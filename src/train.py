@@ -126,7 +126,7 @@ def train_mutual(config_all: dict[dict[str]], loaders: tuple[DataLoader, DataLoa
                  graphbuilders_dict: dict[str, GraphBuilder], regressors_dict: dict[str, nn.Module], log_run: bool):
     """ """
     train_loader, val_loader, test_loader = loaders
-    config = config_all["train_universal"]
+    config = config_all["train_mutual"]
     latent_dim = config["latent_dim"]
     use_mlp_backbone = config["use_mlp_backbone"]
 

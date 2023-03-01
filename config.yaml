@@ -40,7 +40,7 @@ train_single:
     epochs: 100
     use_mlp_backbone: false
 
-train_universal:
+train_mutual:
     latent_dim: 512
     batch_size: 1024
     batches_per_epoch: 1000
