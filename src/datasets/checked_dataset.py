@@ -131,12 +131,6 @@ class CheckedDataset(ABC, Dataset):
         self.input_dim = self.data[0].shape[1]
         self.label_dim = self.data[1].shape[1]
 
-    def to(self, device: torch.device | str):
-        X, Y = self.data
-        X = X.to(device)
-        Y = Y.to(device)
-        self.data = X, Y
-
 if __name__ == "__main__":
     from datasets import ClimARTDataset
     climart_train = ClimARTDataset(split="testing", normalize=True)
