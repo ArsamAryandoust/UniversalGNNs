@@ -74,6 +74,7 @@ def set_test_config(config: dict) -> dict:
     # mutual
     config["train_mutual"]["epochs"] = 1
     config["train_mutual"]["batches_per_epoch"] = 10
+    return config
 
 
 if __name__ == "__main__":
