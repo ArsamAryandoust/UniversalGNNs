@@ -10,6 +10,8 @@ class CheckedDataset(ABC, Dataset):
         self.data = None
         # attributes necessary to the UniversalGNN
         self.spatial_temporal_indeces: list[int] = None
+        self.spatial_temporal_indeces_edge_level: tuple[list[int], list[int]] = None
+        self.encoder_input_dim_edge_level: int = None
         self.edge_level : bool = None
         self.graph_builder : GraphBuilder = None
         self.regressor : nn.Module = None

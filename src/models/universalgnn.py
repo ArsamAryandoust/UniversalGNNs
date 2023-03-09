@@ -41,7 +41,6 @@ class UniversalGNN(pl.LightningModule):
     def __init__(self, latent_dim: int, hidden_dim: int, out_dim: int, n_layers: int, autoencoders_dict: dict[str, nn.Module],
                  graphbuilders_dict: dict[str, GraphBuilder], regressors_dict: dict[str, nn.Module], use_mlp_backbone:bool = False):
         super().__init__()
-        self.save_hyperparameters()
         self.autoencoders = nn.ModuleDict(autoencoders_dict)
         self.graphbuilders = graphbuilders_dict
         self.regressors = nn.ModuleDict(regressors_dict)

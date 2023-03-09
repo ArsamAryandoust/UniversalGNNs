@@ -48,3 +48,5 @@ train_mutual:
     epochs: 100
     n_layers: 4
     use_mlp_backbone: false
+
+force_node_level: false
