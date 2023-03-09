@@ -52,9 +52,10 @@ class UberMovementDataset(CheckedDataset):
         spatio_temporal_indeces_2 = spatial_indeces_2 + temporal_indeces
         features_indeces_1 = []
         features_indeces_2 = []
-        self.spatial_temporal_indeces = ([spatio_temporal_indeces_1,
+        self.spatial_temporal_indeces = list(range(2*spatial_features + temporal_features))
+        self.spatial_temporal_indeces_edge_level = ([spatio_temporal_indeces_1,
                                           features_indeces_1], [spatio_temporal_indeces_2, features_indeces_2])
-        self.encoder_input_dim = spatial_features + temporal_features
+        self.encoder_input_dim_edge_level = spatial_features + temporal_features
 
         self.normalize = normalize
         self.NUM_ORIGINAL_COLUMNS = 11  # original columns

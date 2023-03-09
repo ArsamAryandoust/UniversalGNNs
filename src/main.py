@@ -87,7 +87,7 @@ if __name__ == "__main__":
     if args.test:
         config = set_test_config(config)
 
-    datasets = load_datasets(vars(args))
+    datasets = load_datasets(vars(args), config["force_node_level"])
 
     # if we want to run the baselines then do it
     if args.baselines:
