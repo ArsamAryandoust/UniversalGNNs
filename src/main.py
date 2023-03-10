@@ -49,8 +49,11 @@ def parse_arguments() -> argparse.Namespace:
         args.baselines = False
 
     if not (args.baselines or args.train_single or args.train_mutual):
-        print("Must select one model to train!")
-        exit(1)
+        choice = input("No model selected. Are you sure you just want to load the datasets (y/n)?")
+        while choice.lower() != "y" and choice.lower() != "n":
+            choice = input("Only load datasets? Type 'y' or 'n'.")
+        if choice.lower() == "n":
+            exit(1)
 
     if args.test:
         args.nolog = True
@@ -107,3 +110,6 @@ if __name__ == "__main__":
         # must first load the multidataset data loaders
         data_loaders = load_multidatasets(config["train_mutual"], datasets)
         train_mutual(config, data_loaders, autoencoders_dict, graphbuilders_dict, regressors_dict, args.log_run)
+
+# climart 946
+# BE 1110

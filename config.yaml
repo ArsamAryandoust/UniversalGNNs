@@ -11,7 +11,7 @@ baselines:
         dropout: 0
 
 encoders:
-    encoder_class: "VAE"
+    encoder_class: "LinearAutoEncoder"
     save_path: "/UniversalGNNs/checkpoints/encoders/"
     batch_size: 1024
     max_epochs: 30
@@ -49,4 +49,4 @@ train_mutual:
     n_layers: 4
     use_mlp_backbone: false
 
-force_node_level: false
+force_node_level: true
