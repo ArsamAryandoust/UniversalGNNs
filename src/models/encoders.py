@@ -27,19 +27,17 @@ class BaseEncoder(ABC, pl.LightningModule):
     def get_latent(self, x):
         pass
 
-class LinearAutoEncoder(BaseEncoder):
+class LinearEncoder(BaseEncoder):
     def __init__(self, input_dim: int, latent_dim: int):
-        super.__init__()
+        super().__init__()
         self.encoder = nn.Linear(input_dim, latent_dim)
-        self.decoder = nn.Linear(latent_dim, input_dim)
 
     def forward(self, x):
-        x = F.relu(self.encoder(x))
-        x = self.decoder(x)
-        return x
+        x = self.encoder(x)
+        return F.relu(x)
     
     def get_latent(self, x):
-        return F.relu(self.encoder(x))
+        return self(x)
 
 class Encoder(BaseEncoder):
 

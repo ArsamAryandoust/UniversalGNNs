@@ -1,8 +1,8 @@
 from datasets import MultiSplitDataset, MultiDataset, MultiDatasetBatchSampler
 from datasets import ClimARTDataset, UberMovementDataset, BuildingElectricityDataset
 
-from GraphBuilder import GraphBuilder
-from models import AutoEncoder, VAE, MLP
+from GraphBuilder import GraphBuilder, EuclideanGraphBuilder
+from models import LinearEncoder, AutoEncoder, VAE, MLP
 from train import train_autoencoder
 
 from pathlib import Path
@@ -102,15 +102,18 @@ def load_regressors(config: dict[str], datasets: dict[str, MultiSplitDataset]) -
 
 def load_graphbuilders(config: dict[str], datasets: dict[str, MultiSplitDataset]) -> dict[str, GraphBuilder]:
     """
-    Creates a grapgbuilder object associated with the corresponding datasets and autoencoders.
+    Creates a graphbuilder object associated with the corresponding datasets and autoencoders.
     """
+    graphbuilder_classes = {"EuclideanGraphBuilder": EuclideanGraphBuilder}
+    builder_class = config["builder_class"]
+
     graphbuilders_dict = {}
     for dataset_name in datasets.keys():
         splits = datasets[dataset_name].get_splits()
-        graph_builder = GraphBuilder(distance_function=config["distance_function"],
-                                     params_indeces=splits[0].spatial_temporal_indeces,
-                                     connectivity=config["connectivity"],
-                                     edge_level_batch=splits[0].edge_level)
+        graph_builder = graphbuilder_classes[builder_class](distance_function=config["distance_function"],
+                                                            params_indeces=splits[0].spatial_temporal_indeces,
+                                                            connectivity=config["connectivity"],
+                                                            edge_level_batch=splits[0].edge_level)
         for split in splits:
             split.graph_builder = graph_builder
         graphbuilders_dict[dataset_name] = graph_builder
@@ -124,7 +127,7 @@ def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], gra
     Loads or trains the autoencoders for all datasets. 
     Returns the encoders dict where encoders_dict["dataset_name"] == encoder
     """
-    encoder_classes = {"AutoEncoder": AutoEncoder, "VAE": VAE}
+    encoder_classes = {"AutoEncoder": AutoEncoder, "VAE": VAE, "LinearEncoder": LinearEncoder}
     encoder_class = encoder_classes[config["encoder_class"]]
 
     autoencoders_dict = {}
@@ -136,7 +139,8 @@ def load_encoders(config: dict[str], datasets: dict[str, MultiSplitDataset], gra
         if train_dataset.edge_level:
             autoencoder.set_edge_level_graphbuilder(graphbuilders[dataset_name])
         encoder_name = encoder_class.__name__
-        savefile_path = Path(f"/UniversalGNNs/checkpoints/encoders/{dataset_name}") / f"{encoder_name}_{input_dim}_{config['latent_dim']}.pt"
+        savefile_path = Path(
+            f"/UniversalGNNs/checkpoints/encoders/{dataset_name}") / f"{encoder_name}_{input_dim}_{config['latent_dim']}.pt"
         if savefile_path.exists() and config["load_checkpoint"]:
             autoencoder.load_state_dict(torch.load(savefile_path))
             if train_dataset.edge_level:
