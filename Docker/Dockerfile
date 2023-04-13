@@ -16,5 +16,6 @@ RUN pip3 install pyg-lib torch-scatter torch-sparse torch-cluster torch-spline-c
 RUN pip3 install matplotlib
 ENV PATH="${PATH}:/UniversalGNNs/src:/UniversalGNNs/src/datasets"
 RUN pip3 install wandb
+RUN pip3 install transformers
 
 WORKDIR /UniversalGNNs

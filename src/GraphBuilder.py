@@ -3,9 +3,19 @@ import torch_geometric
 import torch.nn as nn
 import numpy as np
 import scipy
+from abc import ABC, abstractmethod
 
-class GraphBuilder:
+class GraphBuilder(ABC, nn.Module):
+    def set_encoder(self, encoder: nn.Module):
+        self.encoder = encoder
+
+    @abstractmethod
+    def compute_graph():
+        pass
+
+class EuclideanGraphBuilder(GraphBuilder):
     def __init__(self, distance_function, params_indeces, connectivity, edge_level_batch=False):
+        super().__init__()
         self.distance_function = distance_function
         self.params_indeces = params_indeces
         self.connectivity = connectivity

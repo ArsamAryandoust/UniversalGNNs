@@ -11,17 +11,18 @@ baselines:
         dropout: 0
 
 encoders:
-    encoder_class: "VAE"
+    encoder_class: "LinearEncoder"
     save_path: "/UniversalGNNs/checkpoints/encoders/"
     batch_size: 1024
     max_epochs: 30
     max_steps: 200_000
     latent_dim: 512
-    load_checkpoint: true
-    train_self_supervised: true
+    load_checkpoint: false
+    train_self_supervised: false
     train_e2e: true
 
 graphbuilders:
+    builder_class: "EuclideanGraphBuilder"
     connectivity: 0.001
     distance_function: 2
 
@@ -34,11 +35,11 @@ train_single:
     batch_size: 1024
     max_steps: 200_000
     drop_last: true
-    n_layers: 4
+    gnn_layers: 4
     use_random_sampler: true
     batches_per_epoch: 330
     epochs: 100
-    use_mlp_backbone: false
+    backbone: "BERT"
 
 train_mutual:
     latent_dim: 512
@@ -46,7 +47,7 @@ train_mutual:
     batches_per_epoch: 1000
     drop_last: true
     epochs: 100
-    n_layers: 4
-    use_mlp_backbone: false
+    gnn_layers: 4
+    backbone: "BERT"
 
-force_node_level: false
+force_node_level: true

@@ -37,6 +37,8 @@ class ClimARTDataset(CheckedDataset):
         print("Loading files:")
         for file in tqdm(files):
             frame = pd.read_csv(file)
+            if "index" in frame.columns:
+                frame.drop(columns="index", inplace=True)
             if len(frame.columns) != self.NUM_COLUMNS:
                 raise RuntimeError(f"""The number of columns in the csv file 
                     is different from the expected: expected {self.NUM_COLUMNS}, got {len(frame.columns)}."""
